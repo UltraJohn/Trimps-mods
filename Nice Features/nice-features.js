@@ -145,7 +145,11 @@
 	white-space: nowrap;
 }
 .nfHeirGroup > * + * { margin-left: 0.15vw; }
-.nfHeirLabel { color: #e6e6e6; margin-right: 0.3vw; }
+/* Every label holds all label words stacked in one grid cell (only its own visible), so all labels
+   are as wide as the longest word and the heirlooms after them line up. */
+.nfHeirLabel { display: inline-grid; color: #e6e6e6; margin-right: 0.3vw; }
+.nfHeirLabel > span { grid-area: 1 / 1; }
+.nfHeirLabel > .nfHeirLabelGhost { visibility: hidden; }
 .nfHeir {
 	display: inline-flex; align-items: center; justify-content: center;
 	width: 1.5em; height: 1.5em; cursor: pointer; border-radius: 50%;
@@ -827,7 +831,12 @@ body.nfLightTip .nfStoryZone { background: rgba(91, 75, 196, 0.14); border-color
 		groups.forEach(function (g) {
 			if (!g.items.length) return;
 			const group = el('div', 'nfHeirGroup');
-			group.appendChild(el('span', 'nfHeirLabel', g.type === 'Shield' ? 'Shields' : 'Staffs'));
+			const label = el('span', 'nfHeirLabel');
+			const text = g.type === 'Shield' ? 'Shields' : 'Staffs';
+			['Shields', 'Staffs'].forEach(function (word) {
+				label.appendChild(el('span', word === text ? '' : 'nfHeirLabelGhost', word));
+			});
+			group.appendChild(label);
 			g.items.forEach(function (it) {
 				const equipped = it.index === -1;
 				const btn = el('span', 'nfHeir heirloomRare' + it.h.rarity + (equipped ? ' nfEquipped' : ''));
