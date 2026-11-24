@@ -56,6 +56,10 @@
 		'nice-perks.js',
 		'nice-bones.js',
 		'graphs-only.js',
+		'mazio.js',
+		'voids-info.js',
+		'runetrinket-info.js',
+		'seeds-info.js',
 		// 'another-mod.js',
 	];
 
