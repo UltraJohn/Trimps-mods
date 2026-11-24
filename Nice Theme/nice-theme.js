@@ -1,4 +1,4 @@
-// Trimps – Nice Theme 2.2.0 (Steam mod)
+// Trimps – Nice Theme 2.2.1 (Steam mod)
 // Adds "Nice Theme" to Settings > General > Theme. Click the Theme button until it shows Nice Theme.
 //
 // Install: copy this file into  <Steam>\steamapps\common\Trimps\mods\  and make sure
@@ -509,9 +509,11 @@ input:focus, select:focus, textarea:focus, #searchSettings:focus {
 	padding: 2px;
 }
 .battleCell { border: 1px solid var(--nt-bg) !important; border-radius: 3px; }
-.cellColorBeaten   { background: #38a169 !important; color: #0b1f15 !important; }
-.cellColorOverkill { background: #68d391 !important; color: #0b1f15 !important; }
-.cellColorCurrent  {
+/* .battleCell.* so killed and current cells also win over the empowerment colours below, as in the
+   game's own themes. The game's Living and Darkness map rules are more specific and still win. */
+.cellColorBeaten, .battleCell.cellColorBeaten     { background: #38a169 !important; color: #0b1f15 !important; }
+.cellColorOverkill, .battleCell.cellColorOverkill { background: #68d391 !important; color: #0b1f15 !important; }
+.cellColorCurrent, .battleCell.cellColorCurrent   {
 	background: var(--nt-warning) !important;
 	color: #2a1f00 !important;
 	box-shadow: 0 0 10px rgba(232, 181, 63, 0.6);
@@ -570,14 +572,18 @@ input:focus, select:focus, textarea:focus, #searchSettings:focus {
 .spire ul li.spireCell.cellColorNotBeaten.Corruption { background: var(--nt-void); }
 .spireMetals, .spireMetalsMsg { color: var(--nt-warning); }
 #grid.liquid { border: 0; border-radius: var(--nt-radius-sm); overflow: hidden; color: #744210; }
-#grid.liquid ul li, #grid.liquid ul li.cellColorCurrent { background: #f6e05e !important; }
+/* Same strength as the game's own .liquid rule, so Corrupted, Healthy, Magma and mutated cells keep
+   their colours in a liquified Zone (the Spire too). The current cell blends in, as in the game. */
+.liquid ul li { background: #f6e05e; }
+.liquid ul li.cellColorCurrent { background: #f6e05e !important; }
 
 /* Empowerments (Poison / Wind / Ice) */
 .tabColPoison, .tabColWind, .tabColIce { box-shadow: none; border: 2px solid var(--nt-panel-2); border-radius: var(--nt-radius-sm); }
 .tabColPoison { background: #2f855a !important; color: #f0fff4; }
 .tabColWind   { background: #2b6cb0 !important; color: #ebf8ff; }
 .tabColIce    { background: #1f7a99 !important; color: #ebf8ff; }
-.empoweredCellPoison, .badNamePoison, #poisonEmpowermentIcon { background: #38a169 !important; }
+/* Poison is a darker green than killed cells (#38a169), so a killed Poison cell still shows as killed. */
+.empoweredCellPoison, .badNamePoison, #poisonEmpowermentIcon { background: #276749 !important; }
 .empoweredCellWind,   .badNameWind,   #windEmpowermentIcon   { background: #2b6cb0 !important; }
 .empoweredCellIce,    .badNameIce,    #iceEmpowermentIcon    { background: #90cdf4 !important; }
 #iceEmpowermentIcon, #iceEmpowermentText { color: #0b2e4a !important; }
