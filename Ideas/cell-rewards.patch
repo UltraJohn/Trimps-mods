@@ -1,0 +1,468 @@
+diff --git a/Nice Features/nice-features.js b/Nice Features/nice-features.js
+index 946d933..d2de993 100644
+--- a/Nice Features/nice-features.js	
++++ b/Nice Features/nice-features.js	
+@@ -1,8 +1,14 @@
+-// Trimps – Nice Features 1.8.1 (Steam mod)
++// Trimps – Nice Features 1.9.0 (Steam mod)
+ //
+ // Steam port of the old "Trimps Visual Overhaul" userscript:
+ //  * Icons on the enemy grid showing where exotic imps (Magnimp, Goblimp, Chronoimp…) and
+ //    bone drops (Skeletimps) are in the current Zone or map. Hover a cell to see its enemy.
++//  * Cell rewards (Settings > Mods, on by default): hover a cell on the grid to see what killing
++//    it gives: Helium or Radon (last cell, Corrupted, Healthy and mutated enemies, the Void Map
++//    reward, plus what is left in the Zone or map), the item on the cell with its amount (food,
++//    wood, metal, gems, fragments, tokens) or its name, what exotic imps give, and bones. The
++//    amounts come from the game's own rewardResource, so every bonus counts; the drop rules are
++//    fingerprinted like the wrapped functions.
+ //  * A small panel under the battle buttons with your exotic imp bonuses, Blacksmithery zone,
+ //    Radortle (Universe 2) and Void Maps. Each row is the grid icon + value; hover it for details.
+ //  * A strip under the grid with:
+@@ -62,6 +68,38 @@
+ 		mapsSwitch: 'd1e6c1bd',
+ 		updateButtonColor: '76eac7c6',
+ 		tooltip: '6a625f44',
++		// Not wrapped, only read: the cell reward tooltips copy their drop rules.
++		rewardResource: '0d2267e5',
++		rewardToken: '222f302a',
++		'Blimp.loot': 'ca4c7746',
++		'Improbability.loot': '88667fb8',
++		'Omnipotrimp.loot': 'e073d2e8',
++		'Cthulimp.loot': '5004c1d7',
++		'Corruption.reward': '9321a177',
++		'Healthy.reward': 'c8b96d0c',
++		'u2Mutations.rewardMutation': 'b8e7e498',
++		'Goblimp.loot': '566308d8',
++		'Feyimp.loot': '85505d6d',
++		'Flutimp.loot': 'eed3a1e2',
++		'Jestimp.loot': '458dfe99',
++		'Chronoimp.loot': 'e6363bb9',
++		'Magnimp.loot': '5f61ad71',
++		'Whipimp.loot': '1954019a',
++		'Venimp.loot': 'a98c8b8a',
++		'Skeletimp.loot': '487628ce',
++		'Megaskeletimp.loot': 'a194c2ac',
++		activateTurkimpPowers: 'b3346c97',
++		'worldUnlocks.fruit': 'b82377c3',
++		'worldUnlocks.groundLumber': '0c89596d',
++		'worldUnlocks.freeMetals': 'fabad209',
++		'worldUnlocks.Map': '713dc0da',
++		'worldUnlocks.spireMetals': 'ab626e35',
++		'mapUnlocks.gems': 'a4be5730',
++		'mapUnlocks.Gems': 'a4be5730',
++		'mapUnlocks.Any': '501697c0',
++		'mapUnlocks.Metal': '714de835',
++		'mapUnlocks.Food': 'dcebfc77',
++		'mapUnlocks.Wood': '5b8ef0b5',
+ 	};
+ 
+ 	/* ------------------------------------------------------------------ Styles */
+@@ -317,6 +355,14 @@ body.nfLightTip .nfStoryZone { background: rgba(91, 75, 196, 0.14); border-color
+ 				+ 'so you can see where they are in the Zone or map (Nice Features mod).',
+ 			onToggle: function () { applyBodyClasses(); },
+ 		},
++		{
++			key: 'nfCellRewards',
++			titles: ['Cell Rewards: Off', 'Cell Rewards: On'],
++			fallback: 1,
++			description: 'Hover a cell on the grid to see what killing it gives: Helium or Radon and how much is left in the Zone, '
++				+ 'the item on the cell with its amount, what exotic imps give, and bones (Nice Features mod).',
++			onToggle: function () { applyBodyClasses(); },
++		},
+ 		{
+ 			key: 'nfPanel',
+ 			titles: ['Bonus Panel: Off', 'Bonus Panel: On'],
+@@ -551,6 +597,7 @@ body.nfLightTip .nfStoryZone { background: rgba(91, 75, 196, 0.14); border-color
+ 				span.setAttribute('aria-hidden', 'true');
+ 				li.appendChild(span);
+ 			}
++			watchCell(li, cell, i, cells.length, maps);
+ 		}
+ 	}
+ 
+@@ -563,6 +610,359 @@ body.nfLightTip .nfStoryZone { background: rgba(91, 75, 196, 0.14); border-color
+ 		} catch (e) { console.error('[Nice Features]', e); }
+ 	}
+ 
++	/* ------------------------------------------------------------------ Cell rewards tooltip */
++	// Hovering a cell shows what killing it gives. The drop rules are copied from the game's code,
++	// so each one is fingerprinted (FINGERPRINTS); a rule that changed in a game update is left out
++	// of the tooltip and named in the warning bar. The amounts themselves come from the game's own
++	// rewardResource, so every bonus counts.
++	const REWARD_FNS = {
++		rewardResource: function () { return window.rewardResource; },
++		rewardToken: function () { return window.rewardToken; },
++		'Blimp.loot': function () { return game.badGuys.Blimp.loot; },
++		'Improbability.loot': function () { return game.badGuys.Improbability.loot; },
++		'Omnipotrimp.loot': function () { return game.badGuys.Omnipotrimp.loot; },
++		'Cthulimp.loot': function () { return game.badGuys.Cthulimp.loot; },
++		'Corruption.reward': function () { return mutations.Corruption.reward; },
++		'Healthy.reward': function () { return mutations.Healthy.reward; },
++		'u2Mutations.rewardMutation': function () { return u2Mutations.rewardMutation; },
++		'Goblimp.loot': function () { return game.badGuys.Goblimp.loot; },
++		'Feyimp.loot': function () { return game.badGuys.Feyimp.loot; },
++		'Flutimp.loot': function () { return game.badGuys.Flutimp.loot; },
++		'Jestimp.loot': function () { return game.badGuys.Jestimp.loot; },
++		'Chronoimp.loot': function () { return game.badGuys.Chronoimp.loot; },
++		'Magnimp.loot': function () { return game.badGuys.Magnimp.loot; },
++		'Whipimp.loot': function () { return game.badGuys.Whipimp.loot; },
++		'Venimp.loot': function () { return game.badGuys.Venimp.loot; },
++		'Skeletimp.loot': function () { return game.badGuys.Skeletimp.loot; },
++		'Megaskeletimp.loot': function () { return game.badGuys.Megaskeletimp.loot; },
++		activateTurkimpPowers: function () { return window.activateTurkimpPowers; },
++		'worldUnlocks.fruit': function () { return game.worldUnlocks.fruit.fire; },
++		'worldUnlocks.groundLumber': function () { return game.worldUnlocks.groundLumber.fire; },
++		'worldUnlocks.freeMetals': function () { return game.worldUnlocks.freeMetals.fire; },
++		'worldUnlocks.Map': function () { return game.worldUnlocks.Map.fire; },
++		'worldUnlocks.spireMetals': function () { return game.worldUnlocks.spireMetals.fire; },
++		'mapUnlocks.gems': function () { return game.mapUnlocks.gems.fire; },
++		'mapUnlocks.Gems': function () { return game.mapUnlocks.Gems.fire; },
++		'mapUnlocks.Any': function () { return game.mapUnlocks.Any.fire; },
++		'mapUnlocks.Metal': function () { return game.mapUnlocks.Metal.fire; },
++		'mapUnlocks.Food': function () { return game.mapUnlocks.Food.fire; },
++		'mapUnlocks.Wood': function () { return game.mapUnlocks.Wood.fire; },
++	};
++	const rewardOk = {};
++	function checkRewards() {
++		Object.keys(REWARD_FNS).forEach(function (name) {
++			let fn;
++			try { fn = REWARD_FNS[name](); } catch (e) { fn = undefined; }
++			const now = fingerprint(fn);
++			rewardOk[name] = now === FINGERPRINTS[name];
++			if (rewardOk[name]) return;
++			changedFns.push({ name: name, now: now });
++			console.warn('[Nice Features] Game function ' + name + ' changed, fingerprint now ' + now);
++			if (IGNORE_VERSION_CHECK && now !== 'missing') rewardOk[name] = true;
++		});
++	}
++	// A rule that hands out resources also needs rewardResource unchanged.
++	function ok(name) {
++		return rewardOk[name] && rewardOk.rewardResource;
++	}
++
++	// rewardResource hands out the reward it works out; with these switched off for the call it
++	// only returns the amount.
++	const QUIET = ['addHelium', 'addResCheckMax', 'addAvg', 'fadeIn'];
++	function preview(what, base, level, mapScale, pct) {
++		const saved = QUIET.map(function (name) { return window[name]; });
++		QUIET.forEach(function (name) { window[name] = function () {}; });
++		try { return rewardResource(what, base, level, mapScale, pct); }
++		finally { QUIET.forEach(function (name, i) { window[name] = saved[i]; }); }
++	}
++
++	const RES_NAMES = { food: 'Food', wood: 'Wood', metal: 'Metal', gems: 'Gems', fragments: 'Fragments', science: 'Science' };
++	function heliumName() { return game.global.universe === 2 ? 'Radon' : 'Helium'; }
++	function amountLine(label, amount, name) {
++		return '<div>' + label + ': <b>' + prettify(amount) + (name ? ' ' + name : '') + '</b></div>';
++	}
++	function textLine(text) { return '<div>' + text + '</div>'; }
++
++	/* -- Helium and Radon -- */
++	// Cthulimp.loot: what clearing the current Void Map gives (stacked maps included).
++	function voidBase() {
++		const g = game.global;
++		let amt = (g.world >= 60 && g.universe === 1) ? 10 : 2;
++		if (mutations.Magma.active()) amt *= 3;
++		if (g.challengeActive === 'Domination') amt *= 3;
++		let pct = 1;
++		if (g.universe === 1 && g.world >= mutations.Corruption.start(true)) {
++			pct = 2;
++			let share = (g.challengeActive === 'Corrupted') ? 0.075 : 0.15;
++			let corr = mutations.Corruption.cellCount();
++			if (mutations.Healthy.active()) corr -= mutations.Healthy.cellCount();
++			share *= corr;
++			if (mutations.Healthy.active()) {
++				const hv = game.talents.healthStrength2.purchased ? 0.65 : 0.45;
++				amt *= (mutations.Healthy.cellCount() * hv) + share + 1;
++			}
++			else amt *= share + 1;
++		}
++		if (game.talents.voidSpecial.purchased) amt *= (getLastPortal() * 0.0025) + 1;
++		const map = getCurrentMapObject();
++		const count = map && map.stacked;
++		if (count) {
++			const most = Fluffy.getVoidStackCount() - 1;
++			const floof = count > most ? most : count;
++			amt *= game.talents.voidMastery.purchased ? Math.pow(1.5, floof) : 1 + (0.5 * floof);
++			amt *= count;
++		}
++		if (game.talents.scry2.purchased && g.canScryCache) amt *= 1.5;
++		return { base: amt, level: 99, pct: pct };
++	}
++
++	function mutationMult(list) {
++		const t = u2Mutations.types;
++		let m = 0;
++		list.forEach(function (x) {
++			if (x === 'RGE') m += t.Rage.rewardMult();
++			else if (x === 'NVA' || x === 'NVX') m += t.Nova.rewardMult();
++			else if (x === 'CMP' || x === 'CMX') m += t.Compression.rewardMult();
++			else if (x === 'CSP' || x === 'CSX') m += t.Swapper.rewardMult();
++		});
++		return m;
++	}
++
++	// The helium drops of one cell: [{ label, base, level, pct }], empty if none.
++	function heliumSources(cell, index, count, maps) {
++		const g = game.global;
++		if (g.runningChallengeSquared) return [];
++		const u2 = g.universe === 2;
++		const out = [];
++		const dom = g.challengeActive === 'Domination' ? 3 : 1;
++		const portals = getTotalPortals() >= 1 || g.portalActive;
++		if (!maps) {
++			if (cell.name === 'Blimp' && ok('Blimp.loot') && g.world >= (u2 ? 16 : 21) && portals) {
++				out.push({ label: 'Blimp', base: dom, level: cell.level });
++			}
++			else if (cell.name === 'Improbability' && ok('Improbability.loot') && !g.spireActive && portals) {
++				const base = u2 ? 1 : (g.world >= mutations.Corruption.start(true) ? 10 : 5);
++				out.push({ label: 'Improbability', base: base * dom, level: cell.level });
++			}
++			else if (cell.name === 'Omnipotrimp' && ok('Omnipotrimp.loot') && !g.spireActive) {
++				out.push({ label: 'Omnipotrimp', base: 30, level: cell.level });
++			}
++		}
++		if (cell.mutation === 'Corruption' && ok('Corruption.reward') && g.world >= 20) {
++			const base = (g.world >= mutations.Corruption.start(true) ? 10 : 5) * (mutations.Magma.active() ? 3 : 1);
++			out.push({ label: 'Corruption', base: base, level: 99, pct: g.challengeActive === 'Corrupted' ? 0.075 : 0.15 });
++		}
++		if (cell.mutation === 'Healthy' && ok('Healthy.reward') && g.world >= 20) {
++			out.push({ label: 'Healthy', base: 30, level: 99, pct: game.talents.healthStrength2.purchased ? 0.65 : 0.45 });
++		}
++		if (cell.u2Mutation && cell.u2Mutation.length && ok('u2Mutations.rewardMutation') && !(g.spireActive && u2)) {
++			let pct = mutationMult(cell.u2Mutation) * 0.25;
++			if (u2Mutations.tree.Radon.purchased) pct *= 1.25;
++			if (pct > 0) out.push({ label: u2Mutations.getName(cell.u2Mutation), base: 1, level: 99, pct: pct });
++		}
++		if (maps && index === count - 1 && ok('Cthulimp.loot')) {
++			const map = getCurrentMapObject();
++			if (map && map.location === 'Void') out.push(Object.assign({ label: 'Void Map cleared' }, voidBase()));
++		}
++		return out;
++	}
++
++	function heliumOf(sources) {
++		let total = 0;
++		sources.forEach(function (s) { total += preview('helium', s.base, s.level, false, s.pct); });
++		return total;
++	}
++
++	// Helium still to come from the cells not killed yet, current cell included.
++	function heliumLeft(maps) {
++		const cells = maps ? game.global.mapGridArray : game.global.gridArray;
++		const from = (maps ? game.global.lastClearedMapCell : game.global.lastClearedCell) + 1;
++		let total = 0;
++		for (let i = Math.max(0, from); i < cells.length; i++) {
++			if (cells[i]) total += heliumOf(heliumSources(cells[i], i, cells.length, maps));
++		}
++		return total;
++	}
++
++	// The same cell one Zone later (rewardResource reads the Zone from game.global.world), without
++	// Wind stacks: those build up during each fight, so the current ones say nothing about it.
++	function heliumNextZone(sources) {
++		const g = game.global;
++		const wind = game.empowerments.Wind;
++		const zone = g.world, stacks = wind.currentDebuffPower;
++		g.world = zone + 1;
++		wind.currentDebuffPower = 0;
++		try { return { amount: heliumOf(sources), wind: getEmpowerment() === 'Wind' }; }
++		finally { g.world = zone; wind.currentDebuffPower = stacks; }
++	}
++
++	function heliumLines(cell, index, count, maps) {
++		const sources = heliumSources(cell, index, count, maps);
++		if (!sources.length) return '';
++		const name = heliumName();
++		let text = '';
++		sources.forEach(function (s) {
++			text += amountLine(s.label, preview('helium', s.base, s.level, false, s.pct), name);
++		});
++		if (!maps && index === count - 1) {
++			const next = heliumNextZone(sources);
++			text += textLine('The same cell on Zone ' + (game.global.world + 1) + ': ' + prettify(next.amount) + ' ' + name
++				+ (next.wind ? ' (a Wind Zone: more with Wind stacks)' : ''));
++		}
++		text += textLine('Left in this ' + (maps ? 'map' : 'Zone') + ': ' + prettify(heliumLeft(maps)) + ' ' + name);
++		return text;
++	}
++
++	/* -- The item on the cell -- */
++	// Resource drops: [resource, base]. World drops use the Zone, map drops the map level.
++	const WORLD_DROPS = {
++		fruit: [['food', 0.5]],
++		groundLumber: [['wood', 0.5]],
++		freeMetals: [['metal', 0.5]],
++		Map: [['fragments']],
++		spireMetals: [['metal', 25]],
++	};
++	const MAP_DROPS = {
++		gems: [['gems', 0.5]],
++		Gems: [['gems', 0.5]],
++		Metal: [['metal', 0.5]],
++		Food: [['food', 0.5]],
++		Wood: [['wood', 0.5]],
++		Any: [['food', 0.5], ['wood', 0.5], ['metal', 0.5]],
++	};
++
++	function itemLines(cell, maps) {
++		let text = '';
++		if (cell.empowerment && rewardOk.rewardToken) {
++			const tokens = rewardToken(cell.empowerment, true, game.global.world);
++			text += amountLine('Tokens of ' + cell.empowerment, tokens);
++		}
++		const special = cell.special;
++		if (!special) return text;
++		const unlock = maps ? game.mapUnlocks[special] : game.worldUnlocks[special];
++		const drops = (maps ? MAP_DROPS : WORLD_DROPS)[special];
++		const rule = (maps ? 'mapUnlocks.' : 'worldUnlocks.') + special;
++		if (drops && ok(rule)) {
++			const transmute = game.global.challengeActive === 'Transmute';
++			if (special === 'spireMetals' && !game.global.spireActive) return text;
++			if (special === 'Any') text += textLine('One of these, at random:');
++			drops.forEach(function (d) {
++				if (d[0] === 'metal' && transmute) {
++					text += textLine('Metal: none in Transmute');
++					return;
++				}
++				const amt = d.length > 1 ? preview(d[0], d[1], cell.level, maps) : preview(d[0]);
++				text += amountLine(RES_NAMES[d[0]], amt);
++			});
++			return text;
++		}
++		if (unlock && typeof unlock.fire !== 'undefined') {
++			const map = maps && getCurrentMapObject();
++			let line = unlock.title || special;
++			if (map && unlock.last && unlock.last + 5 > map.level) line += ' (already found: gives nothing here)';
++			return text + textLine('Item: ' + line);
++		}
++		return text + textLine('Item: ' + special);
++	}
++
++	/* -- What the enemy itself drops -- */
++	const STACKING_IMPS = {
++		Magnimp: 'Loot',
++		Whipimp: 'Gathering speed',
++		Venimp: 'Breed speed',
++	};
++	function eligibleRes() {
++		const list = ['food', 'wood', 'metal', 'science'];
++		if (game.jobs.Dragimp.owned > 0) list.push('gems');
++		return list;
++	}
++	function secondsLoot(item, seconds) {
++		return scaleToCurrentMap(simpleSeconds(item, seconds));
++	}
++
++	function enemyLines(cell, maps) {
++		const name = cell.name;
++		const bad = game.badGuys[name];
++		if (!bad) return '';
++		let text = '';
++		if (name === 'Blimp' && ok('Blimp.loot')) {
++			['food', 'wood', 'metal'].forEach(function (r) { text += amountLine(RES_NAMES[r], preview(r, 2, cell.level)); });
++			return text;
++		}
++		if (name === 'Goblimp' && ok('Goblimp.loot')) return amountLine('Gems', preview('gems', 3, cell.level, true));
++		if (name === 'Feyimp' && ok('Feyimp.loot')) return amountLine('Gems', preview('gems', 7.5, cell.level));
++		if (name === 'Flutimp' && ok('Flutimp.loot')) return amountLine('Fragments', preview('fragments', 1, cell.level, true));
++		if (name === 'Chronoimp' && maps && rewardOk['Chronoimp.loot']) {
++			eligibleRes().forEach(function (r) { text += amountLine(RES_NAMES[r], secondsLoot(r, 5)); });
++			return text;
++		}
++		if (name === 'Jestimp' && maps && rewardOk['Jestimp.loot']) {
++			text += textLine('One of these, at random:');
++			eligibleRes().forEach(function (r) { text += amountLine(RES_NAMES[r], secondsLoot(r, 45)); });
++			return text;
++		}
++		if (STACKING_IMPS[name] && rewardOk[name + '.loot']) {
++			const n = game.unlocks.impCount[name] || 0;
++			const mult = function (k) {
++				const m = Math.pow(1.003, k);
++				return m < 10 ? 'x' + m.toFixed(3) : 'x' + prettify(m);
++			};
++			return textLine(STACKING_IMPS[name] + ': ' + mult(n) + ' now, <b>' + mult(n + 1) + '</b> after this one');
++		}
++		if (name === 'Turkimp' && rewardOk.activateTurkimpPowers) {
++			if (game.talents.turkimp2.purchased) return textLine('Nothing new: your Turkimp bonus is already permanent');
++			const add = game.talents.turkimp.purchased ? 20 : 15;
++			const max = game.talents.turkimp.purchased ? 35 : 25;
++			return textLine('Turkimp bonus to gathering: +' + add + ' minutes (up to ' + max + ')');
++		}
++		if (name === 'Magimp' && bad.lootCount) {
++			const n = bad.lootCount();
++			return textLine('The drop of ' + n + ' random exotic imp' + (n === 1 ? '' : 's'));
++		}
++		if (name === 'Skeletimp' && rewardOk['Skeletimp.loot']) return amountLine('Bones', 1);
++		if (name === 'Megaskeletimp' && rewardOk['Megaskeletimp.loot']) return amountLine('Bones', 2);
++		// Other exotic imps (Tauntimp, Titimp, Turkimp…): the game's own description of the drop.
++		let desc;
++		try { desc = bad.dropDesc; } catch (e) { desc = undefined; }
++		return desc ? textLine(desc) : '';
++	}
++
++	/* -- The tooltip -- */
++	function rewardTip(cell, index, count, maps) {
++		const helium = heliumLines(cell, index, count, maps);
++		const loot = itemLines(cell, maps) + enemyLines(cell, maps);
++		let text = helium + (helium && loot ? '<div style="margin-top:0.5em"></div>' : '') + loot;
++		if (!text) return '<div style="opacity:0.75">No loot.</div>';
++		text += '<div style="margin-top:0.5em;opacity:0.75">If killed now: bonuses that change during the fight '
++			+ '(Wind stacks, Scryer and more) count as they are at this moment.</div>';
++		return text;
++	}
++
++	function watchCell(li, cell, index, count, maps) {
++		if (li.dataset.nfTip) return;
++		li.dataset.nfTip = '1';
++		li.addEventListener('mouseenter', function (e) { showRewardTip(li, cell, index, count, maps, e); });
++		li.addEventListener('mouseleave', function () { hideRewardTip(li); });
++	}
++
++	function showRewardTip(li, cell, index, count, maps, e) {
++		if (optionValue('nfCellRewards') !== 1) return;
++		if (li.classList.contains('cellColorBeaten') || li.classList.contains('cellColorOverkill')) return;
++		let text;
++		try { text = rewardTip(cell, index, count, maps); } catch (err) { console.error('[Nice Features]', err); return; }
++		// The cell title would show as a second, browser tooltip on top of the game's one.
++		li.dataset.nfTitle = li.title;
++		li.title = '';
++		tooltip(cellTitle(cell), 'customText', e, text);
++	}
++
++	function hideRewardTip(li) {
++		if (li.dataset.nfTitle === undefined) return;
++		li.title = li.dataset.nfTitle;
++		delete li.dataset.nfTitle;
++		tooltip('hide');
++	}
++
+ 	/* ------------------------------------------------------------------ Game function wrappers */
+ 	// FNV-1a hash of a function's source (line endings ignored), as 8 hex digits.
+ 	function fingerprint(fn) {
+@@ -586,6 +986,7 @@ body.nfLightTip .nfStoryZone { background: rgba(91, 75, 196, 0.14); border-color
+ 		updateButtonColor: 'prestige warnings are off',
+ 		tooltip: 'the prestige line in upgrade tooltips is off',
+ 	};
++	Object.keys(REWARD_FNS).forEach(function (name) { EFFECT_WHEN_OFF[name] = 'its part of the cell reward tooltips is off'; });
+ 	function wrap(name, after) {
+ 		const original = window[name];
+ 		const now = fingerprint(original);
+@@ -607,7 +1008,8 @@ body.nfLightTip .nfStoryZone { background: rgba(91, 75, 196, 0.14); border-color
+ 	function warnChanged() {
+ 		if (!changedFns.length) return;
+ 		const list = changedFns.map(function (f) { return f.name + ' (now ' + f.now + ')'; }).join(', ');
+-		const effects = changedFns.map(function (f) { return EFFECT_WHEN_OFF[f.name]; }).join(', and ');
++		const effects = changedFns.map(function (f) { return EFFECT_WHEN_OFF[f.name]; })
++			.filter(function (v, i, a) { return a.indexOf(v) === i; }).join(', and ');
+ 		const bar = document.createElement('div');
+ 		bar.id = 'nfWarning';
+ 		bar.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);z-index:100000;max-width:90vw;'
+@@ -1170,6 +1572,7 @@ body.nfLightTip .nfStoryZone { background: rgba(91, 75, 196, 0.14); border-color
+ 	// The mod loader runs after the game's code and page, so everything is ready here.
+ 	function start() {
+ 		injectStyle();
++		checkRewards();
+ 		watchGrids();
+ 		buildPanel();
+ 		buildStrip();
