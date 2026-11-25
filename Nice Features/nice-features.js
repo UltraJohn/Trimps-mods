@@ -1,4 +1,4 @@
-// Trimps – Nice Features 1.8.1 (Steam mod)
+// Trimps – Nice Features 1.8.2 (Steam mod)
 //
 // Steam port of the old "Trimps Visual Overhaul" userscript:
 //  * Icons on the enemy grid showing where exotic imps (Magnimp, Goblimp, Chronoimp…) and
@@ -819,6 +819,9 @@ body.nfLightTip .nfStoryZone { background: rgba(91, 75, 196, 0.14); border-color
 			const eq = game.global[type + 'Equipped'];
 			if (eq && eq.name !== undefined) items.push({ h: eq, index: -1, location: type + 'Equipped' });
 			carried.forEach(function (h, i) { if (h.type === type) items.push({ h: h, index: i, location: 'heirloomsCarried' }); });
+			// Oldest first: the game sets an heirloom's id to the number of heirlooms found so far, so
+			// each one keeps its slot and equipping one only moves the ring.
+			items.sort(function (a, b) { return a.h.id - b.h.id; });
 			return { type: type, items: items };
 		});
 		const show = unlocked && groups.some(function (g) { return g.items.length > 1; });
