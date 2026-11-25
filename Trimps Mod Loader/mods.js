@@ -1,19 +1,32 @@
-// Trimps – Nice Mod Loader 1.1.0 (Steam mod)
+// Trimps Mod Loader 1.3.0 (Steam mod)
 //
-// The Steam version of Trimps only loads mods/mods.js, so this file loads the other mods
-// in the mods folder for you. To add a mod: put its .js file in the mods folder and add its
-// file name to the list below. To turn one off: remove (or comment out) its line. Then restart Trimps.
+// The Steam version of Trimps only loads mods/mods.js, so this file loads the other mods in the
+// mods folder for you: every .js file directly in that folder. To add a mod: put its .js file in
+// the mods folder. To turn one off: rename it so it no longer ends in .js (for example
+// mazio.js.off). Then restart Trimps. Folders in the mods folder are left alone.
 //
-// Mods are loaded one after another, in the order listed. If one is missing or has an error,
-// the rest still load; check the console (F12) for "[Mod loader]" messages.
+// Mods are loaded one after another. If one is missing or has an error, the rest still load; check
+// the console (F12) for "[Mod loader]" messages, including the order the mods were loaded in.
+//
+// Load order: mods load alphabetically by file name, unless the comment block at the very top of
+// the file (before any code) has one of these lines:
+//
+//   // @load-order: 10            mods with a number load first, lowest first (ties alphabetically);
+//                                 mods without one load after all of them
+//   // @depends: other-mod.js     load after other-mod.js; several are separated by commas, or put
+//                                 on more lines. If one is missing or turned off, this mod is not
+//                                 loaded and a red bar says why.
+//
+// @depends wins over @load-order. Most mods need neither: only use them when a mod really needs
+// another one loaded first.
 //
 // The loader also adds a "Mods" tab to the game's Settings menu. Each mod that registers settings
-// gets its own box there, in the order of the list below. The settings are kept in your save,
-// like the game's own settings.
+// gets its own box there, sorted by name. The settings are kept in your save, like the game's own
+// settings.
 //
-// For mod authors: call NiceModLoader.register() once when your mod starts.
+// For mod authors: call TrimpsModLoader.register() once when your mod starts.
 //
-//   NiceModLoader.register({
+//   TrimpsModLoader.register({
 //       name: 'My Mod',                       // the box title in Settings > Mods
 //       options: [{
 //           key: 'mmThing',                   // key in game.options.menu; keep it unique (use a prefix)
@@ -24,8 +37,8 @@
 //       }],
 //   });
 //
-//   NiceModLoader.value('mmThing')  ->  the current value (the fallback before the save has it)
-//   NiceModLoader.setValue('mmThing', 2)  ->  sets it (0 up to titles.length - 1)
+//   TrimpsModLoader.value('mmThing')  ->  the current value (the fallback before the save has it)
+//   TrimpsModLoader.setValue('mmThing', 2)  ->  sets it (0 up to titles.length - 1)
 //
 // An option with hidden: true is kept in the save but never shown in any settings tab. Use it for
 // a value a mod remembers itself (its titles are then just the list of allowed values).
@@ -49,19 +62,6 @@
 
 (function () {
 	'use strict';
-
-	const MODS = [
-		'nice-theme.js',
-		'nice-features.js',
-		'nice-perks.js',
-		'nice-bones.js',
-		'graphs-only.js',
-		'mazio.js',
-		'voids-info.js',
-		'runetrinket-info.js',
-		'seeds-info.js',
-		// 'another-mod.js',
-	];
 
 	// Relative to index.html, which is where the game loads mods/mods.js from.
 	const FOLDER = 'mods/';
@@ -197,7 +197,9 @@
 		if (item) item.enabled = v;
 	}
 
-	window.NiceModLoader = { version: '1.1.0', register: register, value: value, setValue: setValue };
+	window.TrimpsModLoader = { version: '1.3.0', register: register, value: value, setValue: setValue };
+	// The old name, from when this was the Nice Mod Loader, so mods written for it keep working.
+	window.NiceModLoader = window.TrimpsModLoader;
 
 	/* ------------------------------------------------------------------ Mods tab */
 	const CSS = String.raw`
@@ -231,7 +233,7 @@
 		clearSettingTabs();
 		const tooltips = {};
 		let html = '';
-		categories.forEach(function (c) {
+		categories.slice().sort(function (a, b) { return byName(a.name, b.name); }).forEach(function (c) {
 			let buttons = '';
 			c.options.forEach(function (opt) {
 				const item = game.options.menu[opt.key];
@@ -298,21 +300,31 @@
 		if (!changedFns.length) return;
 		const list = changedFns.map(function (f) { return f.name + ' (now ' + f.now + ')'; }).join(', ');
 		const effects = changedFns.map(function (f) { return EFFECT_WHEN_OFF[f.name]; }).join(', and ');
-		const bar = document.createElement('div');
-		bar.id = 'nmlWarning';
-		bar.style.cssText = 'position:fixed;bottom:0;left:50%;transform:translateX(-50%);z-index:100000;max-width:90vw;'
-			+ 'padding:0.5em 2.2em 0.5em 1em;background:#7f1d1d;color:#fff;border:1px solid #fca5a5;border-bottom:0;';
-		bar.textContent = IGNORE_VERSION_CHECK
-			? 'Nice Mod Loader is running although a Trimps update changed ' + list + ' (IGNORE_VERSION_CHECK is on).'
-			: 'Nice Mod Loader: a Trimps update changed ' + list + ', so ' + effects + '. '
-				+ 'The loader needs an update; to run it anyway, set IGNORE_VERSION_CHECK = true in mods/mods.js.';
-		const close = document.createElement('span');
-		close.textContent = '×';
-		close.title = 'Close';
-		close.style.cssText = 'position:absolute;right:0.6em;top:0.4em;cursor:pointer;';
-		close.onclick = function () { bar.remove(); };
-		bar.appendChild(close);
-		document.body.appendChild(bar);
+		showWarning(IGNORE_VERSION_CHECK
+			? 'Trimps Mod Loader is running although a Trimps update changed ' + list + ' (IGNORE_VERSION_CHECK is on).'
+			: 'Trimps Mod Loader: a Trimps update changed ' + list + ', so ' + effects + '. '
+				+ 'The loader needs an update; to run it anyway, set IGNORE_VERSION_CHECK = true in mods/mods.js.');
+	}
+
+	// A red bar at the bottom of the screen; each warning is its own line in the same bar.
+	function showWarning(text) {
+		let bar = document.getElementById('nmlWarning');
+		if (!bar) {
+			bar = document.createElement('div');
+			bar.id = 'nmlWarning';
+			bar.style.cssText = 'position:fixed;bottom:0;left:50%;transform:translateX(-50%);z-index:100000;max-width:90vw;'
+				+ 'padding:0.5em 2.2em 0.5em 1em;background:#7f1d1d;color:#fff;border:1px solid #fca5a5;border-bottom:0;';
+			const close = document.createElement('span');
+			close.textContent = '×';
+			close.title = 'Close';
+			close.style.cssText = 'position:absolute;right:0.6em;top:0.4em;cursor:pointer;';
+			close.onclick = function () { bar.remove(); };
+			bar.appendChild(close);
+			document.body.appendChild(bar);
+		}
+		const line = document.createElement('div');
+		line.textContent = text;
+		bar.appendChild(line);
 	}
 
 	function setupSettings() {
@@ -345,19 +357,144 @@
 		}, 1000);
 	}
 
+	/* ------------------------------------------------------------------ Finding the mods */
+	// The Steam version runs in NW.js, where page scripts can use Node's fs. The game folder is the
+	// folder of Trimps.exe (process.execPath); the others are fallbacks. Returns null without fs.
+	function modsFolder() {
+		let fs, path;
+		try {
+			if (typeof require !== 'function') return null;
+			fs = require('fs');
+			path = require('path');
+		} catch (e) { return null; }
+		if (!fs || typeof fs.readdirSync !== 'function' || !path || typeof path.join !== 'function') return null;
+		const roots = [];
+		try { roots.push(path.dirname(process.execPath)); } catch (e) { /* no process */ }
+		try { if (typeof nw !== 'undefined' && nw.__dirname) roots.push(nw.__dirname); } catch (e) { /* no nw */ }
+		try { roots.push(process.cwd()); } catch (e) { /* no process */ }
+		for (let i = 0; i < roots.length; i++) {
+			const dir = path.join(roots[i], 'mods');
+			try { if (fs.existsSync(path.join(dir, 'mods.js'))) return { fs: fs, path: path, dir: dir }; } catch (e) { /* next */ }
+		}
+		return null;
+	}
+
+	// "// @key: value" lines in the comment block at the top of a file, before any code.
+	function readHeader(text) {
+		const meta = { order: null, depends: [] };
+		const lines = String(text).replace(/^﻿/, '').split(/\r?\n/);
+		for (let i = 0; i < lines.length; i++) {
+			const line = lines[i].trim();
+			if (!line) continue;
+			if (line.slice(0, 2) !== '//') break;
+			const m = /^\/\/\s*@([\w-]+)\s*:?\s*(.*)$/.exec(line);
+			if (!m) continue;
+			const key = m[1].toLowerCase();
+			const val = m[2].trim();
+			if (key === 'load-order') {
+				const n = Number(val);
+				if (val !== '' && isFinite(n)) meta.order = n;
+				else meta.badOrder = val;
+			} else if (key === 'depends') {
+				val.split(',').forEach(function (d) { d = d.trim(); if (d) meta.depends.push(d); });
+			}
+		}
+		return meta;
+	}
+
+	function byName(a, b) {
+		const x = a.toLowerCase(), y = b.toLowerCase();
+		return x < y ? -1 : x > y ? 1 : 0;
+	}
+
+	// Mods with @load-order first (lowest first), then the rest alphabetically; @depends moves a
+	// mod after the mods it needs. A mod whose dependency is missing is skipped.
+	function planLoad(mods) {
+		const notes = [];
+		const byKey = {};
+		mods.forEach(function (m) { byKey[m.file.toLowerCase()] = m; });
+		mods.forEach(function (m) {
+			if (m.meta.badOrder !== undefined) notes.push(m.file + ': @load-order "' + m.meta.badOrder + '" is not a number, so it loads with the unnumbered mods');
+		});
+		const base = mods.slice().sort(function (a, b) {
+			const ao = a.meta.order, bo = b.meta.order;
+			if (ao !== null && bo !== null && ao !== bo) return ao - bo;
+			if ((ao === null) !== (bo === null)) return ao === null ? 1 : -1;
+			return byName(a.file, b.file);
+		});
+
+		// Missing dependencies, also through other mods (a needs b, b needs a missing c).
+		const skipped = {};
+		let changed = true;
+		while (changed) {
+			changed = false;
+			base.forEach(function (m) {
+				if (skipped[m.file]) return;
+				const missing = m.meta.depends.filter(function (d) { const dm = byKey[d.toLowerCase()]; return !dm || skipped[dm.file]; });
+				if (missing.length) {
+					skipped[m.file] = true;
+					changed = true;
+					notes.push(m.file + ' was not loaded: it needs ' + missing.join(', ') + ', which ' + (missing.length > 1 ? 'are' : 'is') + ' missing, turned off or not loaded');
+				}
+			});
+		}
+
+		const order = [];
+		const state = {};
+		function visit(m, chain) {
+			if (skipped[m.file] || state[m.file] === 'done') return;
+			if (state[m.file] === 'busy') {
+				notes.push('@depends goes in a circle (' + chain.concat(m.file).join(' > ') + '), so ' + chain[chain.length - 1] + ' loads before ' + m.file + ' anyway');
+				return;
+			}
+			state[m.file] = 'busy';
+			m.meta.depends.forEach(function (d) { visit(byKey[d.toLowerCase()], chain.concat(m.file)); });
+			state[m.file] = 'done';
+			order.push(m.file);
+		}
+		base.forEach(function (m) { visit(m, []); });
+		return { order: order, notes: notes };
+	}
+
+	// Every .js file directly in the mods folder except this one. Without Node file access (outside the
+	// Steam version, as in a plain browser) the folder can't be read, so no mods are loaded.
+	function findMods() {
+		const folder = modsFolder();
+		if (!folder) {
+			return { order: [], notes: ['can not read the mods folder (no Node file access), so no mods were loaded'] };
+		}
+		const mods = [];
+		folder.fs.readdirSync(folder.dir).forEach(function (file) {
+			if (!/\.js$/i.test(file) || file.toLowerCase() === 'mods.js') return;
+			const full = folder.path.join(folder.dir, file);
+			try {
+				if (!folder.fs.statSync(full).isFile()) return;
+				mods.push({ file: file, meta: readHeader(folder.fs.readFileSync(full, 'utf8')) });
+			} catch (e) { console.warn('[Mod loader] Could not read ' + file, e); }
+		});
+		return planLoad(mods);
+	}
+
 	/* ------------------------------------------------------------------ Loading */
-	function loadNext(i) {
-		if (i >= MODS.length) return;
-		const script = document.createElement('script');
-		script.src = FOLDER + MODS[i];
-		script.onload = function () { loadNext(i + 1); };
-		script.onerror = function () {
-			console.warn('[Mod loader] Could not load ' + script.src + ' (missing file or typo in the list?)');
-			loadNext(i + 1);
-		};
-		document.body.appendChild(script);
+	function loadAll(list) {
+		console.info('[Mod loader] Loading: ' + (list.join(', ') || 'no mods found'));
+		(function loadNext(i) {
+			if (i >= list.length) return;
+			const script = document.createElement('script');
+			script.src = FOLDER + encodeURIComponent(list[i]);
+			script.onload = function () { loadNext(i + 1); };
+			script.onerror = function () {
+				console.warn('[Mod loader] Could not load ' + script.src);
+				loadNext(i + 1);
+			};
+			document.body.appendChild(script);
+		})(0);
 	}
 
 	try { setupSettings(); } catch (e) { console.error('[Mod loader]', e); }
-	loadNext(0);
+	let plan = { order: [], notes: [] };
+	try { plan = findMods(); } catch (e) { console.error('[Mod loader]', e); }
+	plan.notes.forEach(function (n) { console.warn('[Mod loader] ' + n); });
+	if (plan.notes.length) showWarning('Trimps Mod Loader: ' + plan.notes.join('. ') + '.');
+	loadAll(plan.order);
 })();

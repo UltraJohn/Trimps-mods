@@ -1,6 +1,6 @@
 // Graphs Only v1.2.0 — Trimps Steam mod (loaded by mods/mods.js)
 //
-// Settings > Mods has "Graphs Button: Off/On" in the Graphs Only box (added by the Nice Mod Loader,
+// Settings > Mods has "Graphs Button: Off/On" in the Graphs Only box (added by the Trimps Mod Loader,
 // mods.js; on by default, kept in the save). Off only hides the button; data is still recorded.
 //
 // The AutoTrimps "Graphs only" script (Quiaaaa's fork, linked from the Zorn192/AutoTrimps
@@ -20,7 +20,7 @@
 // Version check: Graphs.js wraps 7 game functions to collect data. Before loading it, this
 // file compares each with a fingerprint of the version it was made for. If any changed (a game
 // update), graphs stay off and a warning names the function. Other mods may wrap the same
-// functions (Nice Features wraps mapsSwitch); the check follows their `__original` chain, and
+// functions (Toolbelt wraps mapsSwitch); the check follows their `__original` chain, and
 // after loading this file sets `__original` on the graphs wrappers too.
 
 (function () {
@@ -104,9 +104,9 @@
 		const style = document.createElement('style');
 		style.textContent = 'body.goNoButton #graphsBtn { display: none !important; }';
 		document.head.appendChild(style);
-		// Settings > Mods comes from the Nice Mod Loader (mods.js). Without it the button stays on.
-		if (window.NiceModLoader) NiceModLoader.register({ name: 'Graphs Only', options: [OPTION] });
-		else console.warn('[Graphs Only] Nice Mod Loader (mods.js) not found, so the setting is not in Settings > Mods.');
+		// Settings > Mods comes from the Trimps Mod Loader (mods.js). Without it the button stays on.
+		if (window.TrimpsModLoader) TrimpsModLoader.register({ name: 'Graphs Only', options: [OPTION] });
+		else console.warn('[Graphs Only] Trimps Mod Loader (mods.js) not found, so the setting is not in Settings > Mods.');
 		applyButton();
 		// Also once a second, for a save loaded or imported later.
 		setInterval(function () { try { applyButton(); } catch (e) { console.error('[Graphs Only]', e); } }, 1000);

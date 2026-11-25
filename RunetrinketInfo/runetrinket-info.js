@@ -1,6 +1,6 @@
 // RunetrinketInfo v1.0.0 — Trimps Steam mod (loaded by mods/mods.js)
 //
-// Settings > Mods has "Runetrinket Info: Off/On" in the RunetrinketInfo box (added by the Nice
+// Settings > Mods has "Runetrinket Info: Off/On" in the RunetrinketInfo box (added by the Trimps
 // Mod Loader, mods.js; on by default, kept in the save). Off removes the box.
 //
 // In Universe 2, once you have the Observation perk, a small box in the corner of the Wood panel
@@ -176,11 +176,11 @@
 	}
 
 	function registerOptions() {
-		if (!window.NiceModLoader) {
-			console.warn('[' + NAME + '] Nice Mod Loader (mods.js) not found, so the setting is not in Settings > Mods.');
+		if (!window.TrimpsModLoader) {
+			console.warn('[' + NAME + '] Trimps Mod Loader (mods.js) not found, so the setting is not in Settings > Mods.');
 			return;
 		}
-		NiceModLoader.register({ name: NAME, options: OPTIONS });
+		TrimpsModLoader.register({ name: NAME, options: OPTIONS });
 	}
 
 	function start() {

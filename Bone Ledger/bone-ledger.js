@@ -1,6 +1,6 @@
-// Nice Bones v3.3.0 — Trimps Steam mod (loaded by mods/mods.js)
+// Bone Ledger v4.0.0 — Trimps Steam mod, formerly Nice Bones (loaded by mods/mods.js)
 //
-// Settings > Mods has two toggles in the Nice Bones box (added by the Nice Mod Loader, mods.js;
+// Settings > Mods has two toggles in the Bone Ledger box (added by the Trimps Mod Loader, mods.js;
 // both on by default, kept in the save): "Fast Skeletimps" (the
 // 10-minute wait below) and "Skeletimp Banking". With both off the game behaves as without the mod.
 //
@@ -42,7 +42,7 @@
 // Version check: before wrapping, the mod compares each function with a fingerprint
 // of the version it was made for. If any changed (a game update), the mod stays off
 // and shows a warning naming the function and its new fingerprint. Other mods may wrap the same
-// functions (the Nice Mod Loader wraps newGame too); each wrapper keeps the function it wrapped in
+// functions (the Trimps Mod Loader wraps newGame too); each wrapper keeps the function it wrapped in
 // `__original`, and the check follows that chain back to the game's own function.
 
 (function () {
@@ -62,7 +62,7 @@
 	};
 
 	const MIN = 60 * 1000;
-	const FAST_WAIT = 10 * MIN;    // Nice Bones wait until the goal
+	const FAST_WAIT = 10 * MIN;    // Bone Ledger wait until the goal
 	const BANK_MAX = 6;            // most Skeletimps that can be banked
 	const IMPORT_COST = 50;
 	const GOAL = 500;              // 10 Exotic Imports x 50 bones
@@ -106,7 +106,7 @@
 			key: 'nbFastTimer',
 			titles: ['Fast Skeletimps: Off', 'Fast Skeletimps: On'],
 			fallback: 1,
-			description: 'Skeletimps every 10 minutes instead of 45 (35 with the talent) until your bones plus 50 per Exotic Import owned reach 500 (Nice Bones mod).',
+			description: 'Skeletimps every 10 minutes instead of 45 (35 with the talent) until your bones plus 50 per Exotic Import owned reach 500 (Bone Ledger mod).',
 			onToggle: refreshStatus,
 		},
 		{
@@ -114,7 +114,7 @@
 			titles: ['Skeletimp Banking: Off', 'Skeletimp Banking: On'],
 			fallback: 1,
 			description: 'Every full Skeletimp wait that passes is banked, up to 6, and a world Zone can spawn one Skeletimp per banked one, '
-				+ 'so time spent in maps or slow Zones is not wasted (Nice Bones mod). Off: one Skeletimp per wait, like the game.',
+				+ 'so time spent in maps or slow Zones is not wasted (Bone Ledger mod). Off: one Skeletimp per wait, like the game.',
 			onToggle: refreshStatus,
 		},
 	];
@@ -129,14 +129,14 @@
 		try { showStatus(); } catch (e) { /* trader closed */ }
 	}
 
-	// Settings > Mods comes from the Nice Mod Loader (mods.js). Without it the settings keep their
+	// Settings > Mods comes from the Trimps Mod Loader (mods.js). Without it the settings keep their
 	// fallback values.
 	function registerOptions() {
-		if (!window.NiceModLoader) {
-			console.warn('[Nice Bones] Nice Mod Loader (mods.js) not found, so the settings are not in Settings > Mods.');
+		if (!window.TrimpsModLoader) {
+			console.warn('[Bone Ledger] Trimps Mod Loader (mods.js) not found, so the settings are not in Settings > Mods.');
 			return;
 		}
-		NiceModLoader.register({ name: 'Nice Bones', options: OPTIONS });
+		TrimpsModLoader.register({ name: 'Bone Ledger', options: OPTIONS });
 	}
 
 	function fastTimer() { return optionOn('nbFastTimer') && progress(game) < GOAL; }
@@ -172,7 +172,7 @@
 				// Use up one wait; the rest stays banked (the game just set it to "now").
 				game.global.lastSkeletimp = Date.now() - Math.max(0, bankedTime(last, w) - w);
 				if (optionOn('nbFastTimer') && before < GOAL && progress(game) >= GOAL) {
-					message('Nice Bones: you have enough bones for every Exotic Import, so Skeletimps are back to their normal timer.'
+					message('Bone Ledger: you have enough bones for every Exotic Import, so Skeletimps are back to their normal timer.'
 						+ (optionOn('nbBanking') ? ' Banking stays on.' : ''), 'Notices', 'italic', '');
 				}
 				return result;
@@ -186,7 +186,7 @@
 		const original = window.newGame;
 		window.newGame = function () {
 			const g = original.apply(this, arguments);
-			try { wrapLoot(g); } catch (e) { console.error('[Nice Bones]', e); }
+			try { wrapLoot(g); } catch (e) { console.error('[Bone Ledger]', e); }
 			return g;
 		};
 		window.newGame.__original = original;
@@ -200,7 +200,7 @@
 	function wrapBuildGrid() {
 		const original = window.buildGrid;
 		window.buildGrid = function () {
-			try { gridLeft = banked(); } catch (e) { console.error('[Nice Bones]', e); gridLeft = -1; }
+			try { gridLeft = banked(); } catch (e) { console.error('[Bone Ledger]', e); gridLeft = -1; }
 			gridFirstDone = false;
 			try { return original.apply(this, arguments); }
 			finally { gridLeft = -1; }
@@ -247,7 +247,7 @@
 		const original = window.showBones;
 		window.showBones = function () {
 			const result = original.apply(this, arguments);
-			try { showStatus(); } catch (e) { console.error('[Nice Bones]', e); }
+			try { showStatus(); } catch (e) { console.error('[Bone Ledger]', e); }
 			return result;
 		};
 		window.showBones.__original = original;
@@ -267,7 +267,7 @@
 		}
 		const value = progress(game);
 		const minutes = Math.round(wait() / MIN);
-		line.textContent = 'Nice Bones: ' + (fast && value < GOAL ? Math.floor(value) + ' / ' + GOAL + ' (bones + 50 per import owned), ' : '')
+		line.textContent = 'Bone Ledger: ' + (fast && value < GOAL ? Math.floor(value) + ' / ' + GOAL + ' (bones + 50 per import owned), ' : '')
 			+ 'Skeletimps every ' + minutes + ' minutes' + (bank ? ', ' + banked() + ' / ' + BANK_MAX + ' banked' : '');
 	}
 
@@ -291,12 +291,12 @@
 		const changed = Object.keys(FINGERPRINTS).filter(function (k) { return fingerprint(fns[k]) !== FINGERPRINTS[k]; });
 		if (changed.length) {
 			const list = changed.map(function (k) { return k + ' (now ' + fingerprint(fns[k]) + ')'; }).join(', ');
-			console.warn('[Nice Bones] Changed game functions: ' + list);
+			console.warn('[Bone Ledger] Changed game functions: ' + list);
 			if (!IGNORE_VERSION_CHECK) {
-				warn('Nice Bones is off: a Trimps update changed ' + list + '. The mod needs an update; to run it anyway, set IGNORE_VERSION_CHECK = true in mods/nice-bones.js.');
+				warn('Bone Ledger is off: a Trimps update changed ' + list + '. The mod needs an update; to run it anyway, set IGNORE_VERSION_CHECK = true in mods/bone-ledger.js.');
 				return;
 			}
-			warn('Nice Bones is running although a Trimps update changed ' + list + ' (IGNORE_VERSION_CHECK is on).');
+			warn('Bone Ledger is running although a Trimps update changed ' + list + ' (IGNORE_VERSION_CHECK is on).');
 			if (changed.some(function (k) { return fingerprint(fns[k]) === 'missing'; })) return; // nothing to wrap
 		}
 		wrapNewGame();

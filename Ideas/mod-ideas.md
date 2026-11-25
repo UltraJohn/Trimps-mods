@@ -9,7 +9,7 @@ Nothing here is built yet.
   finishing, a Zone being reached, or the army dying, for players who leave the game in the background.
   https://steamcommunity.com/app/1877960/discussions/0/761797931977198986/
 - **Edit perk presets without loading them.** Loading a preset needs a respec, so presets can't be adjusted
-  before a new run. Would fit in Nice Perks.
+  before a new run. Would fit in Perkalator.
   https://steamcommunity.com/app/1877960/discussions/0/6296618058087875914/
 - **List of bought upgrades.** Upgrades bought this run with their descriptions, for when one is clicked before
   it was read.

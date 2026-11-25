@@ -1,4 +1,4 @@
-// Trimps – Nice Features 1.10.0 (Steam mod)
+// Trimps – Toolbelt 2.0.0 (Steam mod, formerly Nice Features)
 //
 // Steam port of the old "Trimps Visual Overhaul" userscript:
 //  * Icons on the enemy grid showing where exotic imps (Magnimp, Goblimp, Chronoimp…) and
@@ -36,10 +36,10 @@
 //    Remove, with the same limits and confirmations.
 //  * Settings > Mods also has an on/off toggle for the grid imp icons, the bonus panel, each part of
 //    the strip under the grid (Nature, heirlooms, story) and the hotkeys (all on by default).
-//  * The settings are in the Nice Features box of Settings > Mods, which the Nice Mod Loader
+//  * The settings are in the Toolbelt box of Settings > Mods, which the Trimps Mod Loader
 //    (mods.js) adds, and are kept in your save like the game's own settings.
 //
-// Works with any theme (matches the Nice Theme when it's on).
+// Works with any theme (matches Nightshade when it's on).
 //
 // The game files are never changed. At runtime four game functions are wrapped (the wrapper
 // calls the game's original, then adds one step): drawGrid (put the grid icons back after each
@@ -54,8 +54,8 @@
 // Other mods may wrap the same functions. Each wrapper here keeps the function it wrapped in
 // `__original`, and the fingerprint check follows that chain back to the game's own function.
 //
-// Install: copy into  <Steam>\steamapps\common\Trimps\mods\  and add 'nice-features.js' to the
-// list in mods\mods.js. Restart Trimps. Uninstall: remove the line from mods.js and restart.
+// Install: copy into  <Steam>\steamapps\common\Trimps\mods\  next to mods.js (the mod loader), and
+// restart Trimps. Uninstall: delete or rename the file (for example to toolbelt.js.off) and restart.
 
 (function () {
 	'use strict';
@@ -73,7 +73,7 @@
 	};
 
 	/* ------------------------------------------------------------------ Styles */
-	// Colours fall back to plain values when the Nice Theme isn't active.
+	// Colours fall back to plain values when Nightshade isn't active.
 	const CSS = String.raw`
 .battleCell { position: relative; }
 .nfCellIcon {
@@ -180,7 +180,7 @@ body.nfNoImpIcons .nfCellIcon, body.nfNoPanel #nfPanel,
 body.nfNoNature #nfNature, body.nfNoHeirSwap #nfHeirlooms, body.nfNoStory #nfStoryBtn,
 body.nfNoNature.nfNoHeirSwap.nfNoStory #nfStrip { display: none !important; }
 
-/* Prestige warnings. --nt-shadow-sm only exists in the Nice Theme; elsewhere the fallback is no shadow. */
+/* Prestige warnings. --nt-shadow-sm only exists in Nightshade; elsewhere the fallback is no shadow. */
 .upgradeThing.nfPrestigeFill, .upgradeThing.nfPrestigeLine { position: relative; }
 .nfPrestigeFill.thingColorCanAfford {
 	background: #8a4210 !important; border-color: #f6a25a !important; color: #fff !important;
@@ -310,7 +310,7 @@ body.nfLightTip .nfStoryZone { background: rgba(91, 75, 196, 0.14); border-color
 			key: 'nfGridIcons',
 			titles: ['Grid Icons: Vanilla', 'Grid Icons: Bright', 'Grid Icons: Dimmed', 'Grid Icons: Unlocks'],
 			fallback: 2,
-			description: 'Colors for the item icons on the grid (Nice Features mod). '
+			description: 'Colors for the item icons on the grid (Toolbelt mod). '
 				+ 'Vanilla: icons as the game draws them. '
 				+ 'Bright: every drop in its own color. '
 				+ 'Dimmed: one-time unlocks (equipment, books, unique maps, buildings) bright, and repeating drops (food, wood, metal, gems, fragments, territory bonus) faded. '
@@ -322,14 +322,14 @@ body.nfLightTip .nfStoryZone { background: rgba(91, 75, 196, 0.14); border-color
 			titles: ['Grid Imp Icons: Off', 'Grid Imp Icons: On'],
 			fallback: 1,
 			description: 'Small corner icons on the grid for exotic imps (Magnimp, Goblimp, Chronoimp and more) and Skeletimps, '
-				+ 'so you can see where they are in the Zone or map (Nice Features mod).',
+				+ 'so you can see where they are in the Zone or map (Toolbelt mod).',
 			onToggle: function () { applyBodyClasses(); },
 		},
 		{
 			key: 'nfPanel',
 			titles: ['Bonus Panel: Off', 'Bonus Panel: On'],
 			fallback: 1,
-			description: 'The panel under the battle buttons with your exotic imp bonuses, Blacksmithery Zone, Radortle and Void Maps (Nice Features mod).',
+			description: 'The panel under the battle buttons with your exotic imp bonuses, Blacksmithery Zone, Radortle and Void Maps (Toolbelt mod).',
 			onToggle: function () { applyBodyClasses(); },
 		},
 		{
@@ -337,28 +337,28 @@ body.nfLightTip .nfStoryZone { background: rgba(91, 75, 196, 0.14); border-color
 			titles: ['Nature Forecast: Off', 'Nature Forecast: On'],
 			fallback: 1,
 			description: 'The coming Nature empowerments under the grid (Universe 1 from Zone 236), '
-				+ 'with a More button for the next 100 Zones (Nice Features mod).',
+				+ 'with a More button for the next 100 Zones (Toolbelt mod).',
 			onToggle: function () { applyBodyClasses(); },
 		},
 		{
 			key: 'nfHeirSwap',
 			titles: ['Heirloom Swap: Off', 'Heirloom Swap: On'],
 			fallback: 1,
-			description: 'Your carried Shields and Staffs under the grid: click one to equip it, hover it to see its mods (Nice Features mod).',
+			description: 'Your carried Shields and Staffs under the grid: click one to equip it, hover it to see its mods (Toolbelt mod).',
 			onToggle: function () { applyBodyClasses(); },
 		},
 		{
 			key: 'nfStory',
 			titles: ['Story Button: Off', 'Story Button: On'],
 			fallback: 1,
-			description: 'A Story so far button under the grid that lists every story message up to your highest Zone, newest first (Nice Features mod).',
+			description: 'A Story so far button under the grid that lists every story message up to your highest Zone, newest first (Toolbelt mod).',
 			onToggle: function () { applyBodyClasses(); },
 		},
 		{
 			key: 'nfHotkeys',
 			titles: ['Mod Hotkeys: Off', 'Mod Hotkeys: On'],
 			fallback: 1,
-			description: 'Q, W, E and R pick map presets 1 to 4 while the map screen is open (Nice Features mod). '
+			description: 'Q, W, E and R pick map presets 1 to 4 while the map screen is open (Toolbelt mod). '
 				+ 'Only while the game Hotkeys setting is on too.',
 			onToggle: function () {},
 		},
@@ -366,7 +366,7 @@ body.nfLightTip .nfStoryZone { background: rgba(91, 75, 196, 0.14); border-color
 			key: 'nfPrestigeWarn',
 			titles: ['Prestige Warnings: Off', 'Prestige Warnings: On'],
 			fallback: 1,
-			description: 'Marks equipment prestige upgrades you can afford when the next tier starts weaker than your current item (Nice Features mod). '
+			description: 'Marks equipment prestige upgrades you can afford when the next tier starts weaker than your current item (Toolbelt mod). '
 				+ 'Orange outline: you have the metal (wood for Supershield) to buy back past your current item right away. '
 				+ 'Orange fill: you can not buy back past it yet. '
 				+ 'The number in the corner is how many levels the next tier needs to pass your current item. '
@@ -377,7 +377,7 @@ body.nfLightTip .nfStoryZone { background: rgba(91, 75, 196, 0.14); border-color
 			key: 'nfHousing',
 			titles: ['Best Housing: Off', 'Best Housing: On', 'Best Housing: No Auto'],
 			fallback: 1,
-			description: 'Highlights the housing building that gives the most Trimps for its cost, the same way Highlight Equipment does for equipment (Nice Features mod). '
+			description: 'Highlights the housing building that gives the most Trimps for its cost, the same way Highlight Equipment does for equipment (Toolbelt mod). '
 				+ 'Housing is compared by gems per Trimp once a building that costs gems is unlocked, and by food per Trimp before that. '
 				+ 'No Auto hides the highlight while AutoStructure is on, since it buys housing for you.',
 			onToggle: function () { refreshHousing(); },
@@ -386,7 +386,7 @@ body.nfLightTip .nfStoryZone { background: rgba(91, 75, 196, 0.14); border-color
 			key: 'nfRightClick',
 			titles: ['Right-Click: Off', 'Right-Click: Remove'],
 			fallback: 1,
-			description: 'Right-click a job to fire workers, or a perk to remove levels, without switching to Fire or Remove (Nice Features mod). '
+			description: 'Right-click a job to fire workers, or a perk to remove levels, without switching to Fire or Remove (Toolbelt mod). '
 				+ 'It uses your buy amount, and the same rules as the Fire and Remove buttons: perks can only be removed when Remove is available.',
 			onToggle: function () {},
 		},
@@ -395,7 +395,7 @@ body.nfLightTip .nfStoryZone { background: rgba(91, 75, 196, 0.14); border-color
 			titles: ['Shift for Max: Off', 'Shift for Max: On'],
 			fallback: 1,
 			description: 'While you hold Shift, the buy amount switches to Max, on the buy tabs and in the portal perks, '
-				+ 'so costs and amounts show what a click buys (Nice Features mod). Letting go of Shift switches back to your previous amount. '
+				+ 'so costs and amounts show what a click buys (Toolbelt mod). Letting go of Shift switches back to your previous amount. '
 				+ 'Max uses your Max split, the same as clicking the Max button.',
 			onToggle: function () { if (optionValue('nfShiftMax') !== 1) keyUp('shift'); },
 		},
@@ -403,7 +403,7 @@ body.nfLightTip .nfStoryZone { background: rgba(91, 75, 196, 0.14); border-color
 			key: 'nfAltCustom',
 			titles: ['Alt for Custom: Off', 'Alt for Custom: On'],
 			fallback: 1,
-			description: 'While you hold the left Alt key, the buy amount switches to your Custom amount, on the buy tabs and in the portal perks (Nice Features mod). '
+			description: 'While you hold the left Alt key, the buy amount switches to your Custom amount, on the buy tabs and in the portal perks (Toolbelt mod). '
 				+ 'Letting go switches back to your previous amount. With Shift held as well, the key you pressed last wins.',
 			onToggle: function () { if (optionValue('nfAltCustom') !== 1) { keyUp('alt'); altTooltipOff(false); } },
 		},
@@ -432,7 +432,7 @@ body.nfLightTip .nfStoryZone { background: rgba(91, 75, 196, 0.14); border-color
 
 	// The game's own themes differ: Black Background, Default and Gradient have light grey popups
 	// and a light area under the grid (see-through grey over the background picture); only the
-	// Dark theme and the Nice Theme are dark there. The mod's purple designs get a darker variant there (CSS: nfLightTip,
+	// Dark theme and Nightshade are dark there. The mod's purple designs get a darker variant there (CSS: nfLightTip,
 	// nfLightStrip). Runs once a second, so a theme change is picked up within a second.
 	function isLight(color) {
 		const m = /rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?/.exec(color || '');
@@ -447,14 +447,14 @@ body.nfLightTip .nfStoryZone { background: rgba(91, 75, 196, 0.14); border-color
 		setBodyClass('nfLightStrip', theme === 1 || theme === 3);
 	}
 
-	// Settings > Mods comes from the Nice Mod Loader (mods.js). Without it the settings keep their
+	// Settings > Mods comes from the Trimps Mod Loader (mods.js). Without it the settings keep their
 	// fallback values.
 	function registerOptions() {
-		if (!window.NiceModLoader) {
-			console.warn('[Nice Features] Nice Mod Loader (mods.js) not found, so the settings are not in Settings > Mods.');
+		if (!window.TrimpsModLoader) {
+			console.warn('[Toolbelt] Trimps Mod Loader (mods.js) not found, so the settings are not in Settings > Mods.');
 			return;
 		}
-		NiceModLoader.register({ name: 'Nice Features', options: OPTIONS });
+		TrimpsModLoader.register({ name: 'Toolbelt', options: OPTIONS });
 	}
 
 	/* ------------------------------------------------------------------ Prestige warnings */
@@ -573,7 +573,7 @@ body.nfLightTip .nfStoryZone { background: rgba(91, 75, 196, 0.14); border-color
 		if (!info || !tip) return;
 		const line = document.createElement('div');
 		line.className = 'nfTipLine';
-		line.textContent = 'Nice Features: the next ' + info.item + ' needs ' + prettify(info.levels) + ' levels to pass your current one, '
+		line.textContent = 'Toolbelt: the next ' + info.item + ' needs ' + prettify(info.levels) + ' levels to pass your current one, '
 			+ prettify(info.total) + ' ' + info.res + ' including this upgrade'
 			+ (info.enough ? ' (you have it).' : ' (' + prettify(info.short) + ' more than you have).');
 		tip.appendChild(line);
@@ -638,7 +638,7 @@ body.nfLightTip .nfStoryZone { background: rgba(91, 75, 196, 0.14); border-color
 		try {
 			decorateGrid(false);
 			if (game.global.mapsActive) decorateGrid(true);
-		} catch (e) { console.error('[Nice Features]', e); }
+		} catch (e) { console.error('[Toolbelt]', e); }
 	}
 
 	/* ------------------------------------------------------------------ Game function wrappers */
@@ -669,12 +669,12 @@ body.nfLightTip .nfStoryZone { background: rgba(91, 75, 196, 0.14); border-color
 		const now = fingerprint(original);
 		if (now !== FINGERPRINTS[name]) {
 			changedFns.push({ name: name, now: now });
-			console.warn('[Nice Features] Game function ' + name + ' changed, fingerprint now ' + now);
+			console.warn('[Toolbelt] Game function ' + name + ' changed, fingerprint now ' + now);
 			if (!IGNORE_VERSION_CHECK || now === 'missing') return false;
 		}
 		const wrapper = function () {
 			const result = original.apply(this, arguments);
-			try { after.call(this, result, arguments); } catch (e) { console.error('[Nice Features]', e); }
+			try { after.call(this, result, arguments); } catch (e) { console.error('[Toolbelt]', e); }
 			return result;
 		};
 		wrapper.__original = original;
@@ -691,9 +691,9 @@ body.nfLightTip .nfStoryZone { background: rgba(91, 75, 196, 0.14); border-color
 		bar.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);z-index:100000;max-width:90vw;'
 			+ 'padding:0.5em 2.2em 0.5em 1em;background:#7f1d1d;color:#fff;border:1px solid #fca5a5;border-top:0;';
 		bar.textContent = IGNORE_VERSION_CHECK
-			? 'Nice Features is running although a Trimps update changed ' + list + ' (IGNORE_VERSION_CHECK is on).'
-			: 'Nice Features: a Trimps update changed ' + list + ', so ' + effects + '. '
-				+ 'The mod needs an update; to run it anyway, set IGNORE_VERSION_CHECK = true in mods/nice-features.js.';
+			? 'Toolbelt is running although a Trimps update changed ' + list + ' (IGNORE_VERSION_CHECK is on).'
+			: 'Toolbelt: a Trimps update changed ' + list + ', so ' + effects + '. '
+				+ 'The mod needs an update; to run it anyway, set IGNORE_VERSION_CHECK = true in mods/toolbelt.js.';
 		const close = document.createElement('span');
 		close.textContent = '×';
 		close.title = 'Close';
@@ -1037,7 +1037,7 @@ body.nfLightTip .nfStoryZone { background: rgba(91, 75, 196, 0.14); border-color
 				e.stopPropagation(); // keep the game's own E (Equality) from also firing here
 				e.preventDefault();
 			}
-		} catch (err) { console.error('[Nice Features]', err); }
+		} catch (err) { console.error('[Toolbelt]', err); }
 	}
 
 	/* ------------------------------------------------------------------ Right-click to remove */
@@ -1072,7 +1072,7 @@ body.nfLightTip .nfStoryZone { background: rgba(91, 75, 196, 0.14); border-color
 				try { buyPortalUpgrade(t.name); } finally { game.global.removingPerks = was; }
 				updateAllPerkColors();
 			}
-		} catch (err) { console.error('[Nice Features]', err); }
+		} catch (err) { console.error('[Toolbelt]', err); }
 	}
 
 	/* ------------------------------------------------------------------ Shift for Max, Alt for Custom */
@@ -1141,7 +1141,7 @@ body.nfLightTip .nfStoryZone { background: rgba(91, 75, 196, 0.14); border-color
 		if (!delay) { pressKey(name); return; }
 		holdTimers[name] = setTimeout(function () {
 			holdTimers[name] = null;
-			try { pressKey(name); } catch (err) { console.error('[Nice Features]', err); }
+			try { pressKey(name); } catch (err) { console.error('[Toolbelt]', err); }
 		}, delay);
 	}
 	function pressKey(name) {
@@ -1209,7 +1209,7 @@ body.nfLightTip .nfStoryZone { background: rgba(91, 75, 196, 0.14); border-color
 			window.shiftPressed = true;
 			if (typeof update === 'function') {
 				window.tooltipUpdateFunction = update;
-				try { update(); } catch (e) { console.error('[Nice Features]', e); }
+				try { update(); } catch (e) { console.error('[Toolbelt]', e); }
 			}
 		}, 0);
 	}
@@ -1258,7 +1258,7 @@ body.nfLightTip .nfStoryZone { background: rgba(91, 75, 196, 0.14); border-color
 					if (!e.repeat) saveHoverTip();
 				}
 				keyDown(name, e);
-			} catch (err) { console.error('[Nice Features]', err); }
+			} catch (err) { console.error('[Toolbelt]', err); }
 		}, true);
 		window.addEventListener('mousemove', function (e) { mouse.x = e.clientX; mouse.y = e.clientY; }, true);
 		window.addEventListener('keyup', function (e) {
@@ -1270,15 +1270,15 @@ body.nfLightTip .nfStoryZone { background: rgba(91, 75, 196, 0.14); border-color
 				if (name === 'alt') {
 					altTooltipOff(e.shiftKey);
 					setTimeout(function () {
-						try { restoreHoverTip(); altHoverTip = null; } catch (err) { console.error('[Nice Features]', err); }
+						try { restoreHoverTip(); altHoverTip = null; } catch (err) { console.error('[Toolbelt]', err); }
 					}, 50);
 				}
 				if (name === 'shift' && altSetShift) altTooltipKeep();
-			} catch (err) { console.error('[Nice Features]', err); }
+			} catch (err) { console.error('[Toolbelt]', err); }
 		}, true);
 		// The key-up is missed when a key is let go in another window (Alt+Tab).
 		window.addEventListener('blur', function () {
-			try { releaseAll(); altTooltipOff(false); } catch (err) { console.error('[Nice Features]', err); }
+			try { releaseAll(); altTooltipOff(false); } catch (err) { console.error('[Toolbelt]', err); }
 		});
 	}
 
@@ -1312,12 +1312,12 @@ body.nfLightTip .nfStoryZone { background: rgba(91, 75, 196, 0.14); border-color
 		// Panel and strip values change in many places in the game, so refresh them once a
 		// second. Visibility too, for a save loaded straight into the map chooser.
 		setInterval(function () {
-			try { updatePanel(); updateStrip(); updateStripVisibility(); applyBodyClasses(); } catch (e) { console.error('[Nice Features]', e); }
+			try { updatePanel(); updateStrip(); updateStripVisibility(); applyBodyClasses(); } catch (e) { console.error('[Toolbelt]', e); }
 		}, 1000);
 		updatePanel();
 		updateStrip();
 		updateStripVisibility();
 	}
 
-	try { start(); } catch (e) { console.error('[Nice Features]', e); }
+	try { start(); } catch (e) { console.error('[Toolbelt]', e); }
 })();

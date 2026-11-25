@@ -1,6 +1,6 @@
 // MazIO v1.0.0 — Trimps Steam mod (loaded by mods/mods.js)
 //
-// Settings > Mods has "MaZ Import/Export: Off/On" in the MazIO box (added by the Nice Mod
+// Settings > Mods has "MaZ Import/Export: Off/On" in the MazIO box (added by the Trimps Mod
 // Loader, mods.js; on by default, kept in the save). Off removes the two buttons.
 //
 // Adds Export and Import buttons to the game's Map at Zone window (hotkey Z, or the Map At Zone
@@ -22,8 +22,8 @@
 // original, then adds one step): tooltip, to add the two buttons after the game builds the Map at
 // Zone window. Before wrapping it is compared with a fingerprint of the version this mod was made
 // for (Trimps 5.10.1). If a Trimps update changed it, the mod stays off and shows a warning (set
-// IGNORE_VERSION_CHECK to true below to run it anyway). Other mods may wrap tooltip too (Nice
-// Features does); each wrapper keeps the function it wrapped in `__original`, and the check
+// IGNORE_VERSION_CHECK to true below to run it anyway). Other mods may wrap tooltip too (Toolbelt
+// does); each wrapper keeps the function it wrapped in `__original`, and the check
 // follows that chain back to the game's own function.
 
 (function () {
@@ -346,11 +346,11 @@
 	}
 
 	function registerOptions() {
-		if (!window.NiceModLoader) {
-			console.warn('[' + NAME + '] Nice Mod Loader (mods.js) not found, so the setting is not in Settings > Mods.');
+		if (!window.TrimpsModLoader) {
+			console.warn('[' + NAME + '] Trimps Mod Loader (mods.js) not found, so the setting is not in Settings > Mods.');
 			return;
 		}
-		NiceModLoader.register({ name: NAME, options: OPTIONS });
+		TrimpsModLoader.register({ name: NAME, options: OPTIONS });
 	}
 
 	function start() {

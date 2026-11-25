@@ -1,4 +1,4 @@
-// Trimps – Nice Perks 1.1.1 (part of Nice Features, Steam mod)
+// Trimps – Perkalator 2.0.0 (Steam mod, formerly Nice Perks)
 //
 // Adds a perk preset list and an Optimize button next to Cancel and Respec in the Portal and
 // View Perks windows. Optimize works out the best perks for the chosen preset (Perky in
@@ -31,12 +31,12 @@
 // adds one step): updatePerkLevel, to colour the change. It is fingerprinted the same way; if it
 // changed, the colours stay off and a warning says so.
 //
-// Needs Nice Mod Loader (mods/mods.js) and Nice Features.
+// Needs Trimps Mod Loader (mods/mods.js).
 
 (function () {
 	'use strict';
 
-	const VERSION = '1.1.1';
+	const VERSION = '2.0.0';
 	const IGNORE_VERSION_CHECK = false;
 	const FINGERPRINTS = {
 		respecPerks: 'd7dac3ed',
@@ -113,7 +113,7 @@
 
 	function chosenPreset(universe) {
 		const list = presetsFor(universe);
-		const index = NiceModLoader.value(PRESET_KEYS[universe]);
+		const index = TrimpsModLoader.value(PRESET_KEYS[universe]);
 		const p = index > 0 ? list[index - 1] : null;
 		return p && presetShown(p, universe) ? p : defaultPreset(universe);
 	}
@@ -121,7 +121,7 @@
 	function setPreset(universe, key) {
 		const list = presetsFor(universe);
 		for (let i = 0; i < list.length; i++) {
-			if (list[i].key === key) NiceModLoader.setValue(PRESET_KEYS[universe], i + 1);
+			if (list[i].key === key) TrimpsModLoader.setValue(PRESET_KEYS[universe], i + 1);
 		}
 	}
 
@@ -1384,7 +1384,7 @@
 		Object.keys(FINGERPRINTS).forEach(function (name) {
 			const now = fingerprint(window[name]);
 			if (now !== FINGERPRINTS[name]) {
-				console.warn('[Nice Perks] Game function ' + name + ' changed, fingerprint now ' + now);
+				console.warn('[Perkalator] Game function ' + name + ' changed, fingerprint now ' + now);
 				if (!IGNORE_VERSION_CHECK || now === 'missing') changedFns.push(name + ' (now ' + now + ')');
 			}
 		});
@@ -1415,7 +1415,7 @@
 		if (universe !== 1 && universe !== 2) return;
 		const changed = checkGameFunctions();
 		if (changed.length) {
-			showMessage('Optimize is off', 'A Trimps update changed ' + changed.join(', ') + ', so Optimize stays off until Nice Perks is updated. To use it anyway, set IGNORE_VERSION_CHECK = true in mods/nice-perks.js.');
+			showMessage('Optimize is off', 'A Trimps update changed ' + changed.join(', ') + ', so Optimize stays off until Perkalator is updated. To use it anyway, set IGNORE_VERSION_CHECK = true in mods/perkalator.js.');
 			return;
 		}
 		if (isChallenge('Hypothermia') && game.global.viewingUpgrades) {
@@ -1436,7 +1436,7 @@
 		try {
 			levels = universe === 2 ? surkyOptimize(preset) : perkyOptimize(preset);
 		} catch (e) {
-			console.error('[Nice Perks]', e);
+			console.error('[Perkalator]', e);
 			showMessage('Optimize failed', calcName(universe) + ' could not work out the perks for this save (' + String(e && e.message || e) + '). Nothing was changed.');
 			return;
 		}
@@ -1585,7 +1585,7 @@
 		return wrap;
 	}
 
-	function enabled() { return NiceModLoader.value('nfPerkOptimize') === 1; }
+	function enabled() { return TrimpsModLoader.value('nfPerkOptimize') === 1; }
 
 	function updateControls() {
 		const container = document.getElementById('portalBtnContainer');
@@ -1613,7 +1613,7 @@
 	// The game writes that text in updatePerkLevel, so that is wrapped (after a fingerprint check).
 	const WRAP_FINGERPRINTS = { updatePerkLevel: 'e1ab1663' };
 
-	function colorsOn() { return NiceModLoader.value('nfPerkColors') === 1; }
+	function colorsOn() { return TrimpsModLoader.value('nfPerkColors') === 1; }
 
 	function markChange(what) {
 		const perk = game.portal[what];
@@ -1639,7 +1639,7 @@
 		const original = window.updatePerkLevel;
 		const now = fingerprint(original);
 		if (now !== WRAP_FINGERPRINTS.updatePerkLevel) {
-			console.warn('[Nice Perks] Game function updatePerkLevel changed, fingerprint now ' + now);
+			console.warn('[Perkalator] Game function updatePerkLevel changed, fingerprint now ' + now);
 			if (!IGNORE_VERSION_CHECK || now === 'missing') {
 				wrapProblems.push('updatePerkLevel (now ' + now + ')');
 				return;
@@ -1647,7 +1647,7 @@
 		}
 		const wrapper = function (what) {
 			const result = original.apply(this, arguments);
-			try { markChange(what); } catch (e) { console.error('[Nice Perks]', e); }
+			try { markChange(what); } catch (e) { console.error('[Perkalator]', e); }
 			return result;
 		};
 		wrapper.__original = original;
@@ -1660,8 +1660,8 @@
 		bar.id = 'nfPerkWarning';
 		bar.style.cssText = 'position:fixed;bottom:0;left:50%;transform:translateX(-50%);z-index:100000;max-width:90vw;'
 			+ 'padding:0.5em 2.2em 0.5em 1em;background:#7f1d1d;color:#fff;border:1px solid #fca5a5;border-bottom:0;';
-		bar.textContent = 'Nice Perks: a Trimps update changed ' + wrapProblems.join(', ') + ', so perk changes are not coloured. '
-			+ 'The mod needs an update; to run it anyway, set IGNORE_VERSION_CHECK = true in mods/nice-perks.js.';
+		bar.textContent = 'Perkalator: a Trimps update changed ' + wrapProblems.join(', ') + ', so perk changes are not coloured. '
+			+ 'The mod needs an update; to run it anyway, set IGNORE_VERSION_CHECK = true in mods/perkalator.js.';
 		const close = document.createElement('span');
 		close.textContent = '×';
 		close.title = 'Close';
@@ -1673,8 +1673,8 @@
 
 	/* ------------------------------------------------------------------ Start */
 	function start() {
-		if (typeof NiceModLoader === 'undefined') {
-			console.warn('[Nice Perks] needs Nice Mod Loader (mods/mods.js)');
+		if (typeof TrimpsModLoader === 'undefined') {
+			console.warn('[Perkalator] needs Trimps Mod Loader (mods/mods.js)');
 			return;
 		}
 		const style = document.createElement('style');
@@ -1682,8 +1682,8 @@
 		style.textContent = CSS;
 		document.head.appendChild(style);
 
-		NiceModLoader.register({
-			name: 'Nice Features',
+		TrimpsModLoader.register({
+			name: 'Perkalator',
 			options: [
 				{
 					key: 'nfPerkOptimize',
@@ -1708,16 +1708,16 @@
 		warnWrapProblems();
 
 		setInterval(function () {
-			try { updateControls(); } catch (e) { console.error('[Nice Perks]', e); }
+			try { updateControls(); } catch (e) { console.error('[Perkalator]', e); }
 		}, 200);
 		window.addEventListener('resize', function () {
 			const select = document.getElementById('nfPerkPreset');
 			if (select) fitSelect(select);
 		});
-		console.log('[Nice Perks] ' + VERSION + ' loaded');
+		console.log('[Perkalator] ' + VERSION + ' loaded');
 	}
 
-	window.NicePerks = {
+	window.Perkalator = {
 		version: VERSION,
 		optimize: function (universe, key) {
 			// For testing: the levels a preset gives, without changing anything.
@@ -1728,5 +1728,5 @@
 		fingerprint: fingerprint,
 	};
 
-	try { start(); } catch (e) { console.error('[Nice Perks]', e); }
+	try { start(); } catch (e) { console.error('[Perkalator]', e); }
 })();

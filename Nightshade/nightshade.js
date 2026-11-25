@@ -1,10 +1,11 @@
-// Trimps – Nice Theme 2.2.1 (Steam mod)
-// Adds "Nice Theme" to Settings > General > Theme. Click the Theme button until it shows Nice Theme.
+// Trimps – Nightshade 3.0.0 (Steam mod, formerly Nice Theme)
+// Adds "Nightshade" to Settings > General > Theme. Click the Theme button until it shows Nightshade.
 //
-// Install: copy this file into  <Steam>\steamapps\common\Trimps\mods\  and make sure
-// 'nice-theme.js' is in the list in mods\mods.js (the mod loader). Restart Trimps.
-// Uninstall: switch to one of the game's own themes first, then remove 'nice-theme.js' from the list
-// in mods.js and restart.
+// Install: copy this file into  <Steam>\steamapps\common\Trimps\mods\  next to mods.js (the mod
+// loader), and restart Trimps. It can load in any order: its styles go right after the game's own
+// stylesheet, so other mods' styles always come after it.
+// Uninstall: switch to one of the game's own themes first, then delete or rename the file (for
+// example to nightshade.js.off) and restart.
 
 (function () {
 	'use strict';
@@ -13,7 +14,7 @@
 	// "<name>Theme", matching Trimps' convention.
 	const THEMES = [
 		{
-			title: 'Nice Theme', name: 'nice',
+			title: 'Nightshade', name: 'nightshade',
 			palette: {
 				// Page and panel colours from the unfinished "modern" Trimps theme (Tailwind's
 				// grey-blue scale: 900 #1A202C, 800 #2D3748, 700 #4A5568, 600 #718096), with the
@@ -1024,12 +1025,17 @@ input:focus, select:focus, textarea:focus, #searchSettings:focus {
 		style.id = id;
 		style.textContent = CSS + '\n' + paletteCss(theme.palette) + (theme.css || '');
 		// Trimps' removeStyles() removes theme elements via document.head.removeChild, so it must live in <head>.
-		document.head.appendChild(style);
+		// It goes right after the game's own stylesheet (css/style.css), before any other mod's styles and
+		// mods/mods.css: the theme overrides the game, and other mods override the theme, whatever order
+		// the mods load in.
+		const gameCss = document.head.querySelector('link[href$="css/style.css"]');
+		if (gameCss) document.head.insertBefore(style, gameCss.nextSibling);
+		else document.head.appendChild(style);
 	}
 
 	function patch() {
 		const opt = window.game && game.options && game.options.menu && game.options.menu.darkTheme;
-		if (!opt || opt.__niceThemePatched) return;
+		if (!opt || opt.__nightshadePatched) return;
 
 		const indexes = {};
 		THEMES.forEach(function (theme) {
@@ -1045,18 +1051,18 @@ input:focus, select:focus, textarea:focus, #searchSettings:focus {
 			return origApply.call(this, titleIndex);
 		};
 
-		opt.description = opt.description.replace(/\.$/, '') + ', and the modern Nice Theme.';
-		opt.__niceThemePatched = true;
+		opt.description = opt.description.replace(/\.$/, '') + ', and the modern Nightshade theme.';
+		opt.__nightshadePatched = true;
 
-		// Version 2.1 also had "Nice Theme Light" right after it. A save that had Light selected points past
-		// the end of the list now, so move it to Nice Theme.
+		// Version 2.1 also had "Nightshade Light" right after it. A save that had Light selected points past
+		// the end of the list now, so move it to Nightshade.
 		if (opt.enabled >= opt.titles.length) opt.enabled = opt.titles.indexOf(THEMES[0].title);
 
 		// Before this patch the game tried to apply our index itself, which adds a link to the missing
 		// css/undefined.css. Remove those.
 		document.querySelectorAll('link#undefinedTheme').forEach(function (el) { el.remove(); });
 
-		// If the save already had a Nice Theme selected, the game applied a fallback before we patched. Re-apply now.
+		// If the save already had a Nightshade selected, the game applied a fallback before we patched. Re-apply now.
 		if (indexes[opt.enabled]) opt.onToggle();
 
 		// Refresh the settings button label in case it rendered before the title existed.
@@ -1070,7 +1076,7 @@ input:focus, select:focus, textarea:focus, #searchSettings:focus {
 	// straight away (no flash of the default theme). The interval is only a fallback; patch() is a no-op once applied.
 	// Never let a theme problem interrupt the game itself.
 	function safePatch() {
-		try { patch(); } catch (e) { console.error('[Nice Theme]', e); }
+		try { patch(); } catch (e) { console.error('[Nightshade]', e); }
 	}
 	safePatch();
 	new MutationObserver(safePatch).observe(document.head, { childList: true });

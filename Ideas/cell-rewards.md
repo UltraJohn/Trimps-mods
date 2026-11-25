@@ -1,6 +1,6 @@
 # Cell rewards tooltip (parked)
 
-Status: parked on 2026-11-24 because of feature creep, to be rethought later. The code is not in Nice Features. It's saved as a patch next to this file.
+Status: parked on 2026-11-24 because of feature creep, to be rethought later. The code is not in Toolbelt (called Nice Features at the time). It's saved as a patch next to this file.
 
 ## The idea
 
@@ -8,7 +8,7 @@ Hover any cell on the grid that isn't killed yet to see what killing it gives. I
 
 ## What the parked version does
 
-- **Setting:** "Cell Rewards: Off / On" in the Nice Features box in Settings > Mods (key `nfCellRewards`, on by default). When it's off, cells keep the plain browser hover with the enemy name.
+- **Setting:** "Cell Rewards: Off / On" in the Toolbelt box in Settings > Mods (key `nfCellRewards`, on by default). When it's off, cells keep the plain browser hover with the enemy name.
 - **Tooltip:** uses the game's own tooltip box (`tooltip(title, 'customText', event, text)`). Its title is the enemy name plus the corruption effect, from `cellTitle`. It's hidden on cells already killed (`cellColorBeaten`) or cleared by overkill (`cellColorOverkill`). The browser title is cleared while it's open, so two tooltips never show.
 - **Helium and radon:**
   - Last cell: Blimp from Z21 (Z16 in U2), Improbability, Omnipotrimp. Shows what the same cell gives on the next zone. That number leaves Wind stacks out and says when the next zone is a Wind zone.
@@ -74,10 +74,10 @@ Checked in a browser copy of the Steam build with the test save, at Z240 in U1, 
 
 ## Picking it up again
 
-The patch is made against `Nice Features/nice-features.js` at commit `d1c9d0c`. It takes the version to 1.9.0. To apply it:
+The patch is made against `Nice Features/nice-features.js` at commit `d1c9d0c`, before the mod was renamed to Toolbelt (`Toolbelt/toolbelt.js`). It takes the version to 1.9.0. It no longer applies as it is: the file has moved and changed since. Apply it by hand, or check out `d1c9d0c`, apply it there with
 
 ```
 git apply "Ideas/cell-rewards.patch"
 ```
 
-If Nice Features has changed since then, apply it by hand: the cell rewards section is one block, plus small edits to the header, `FINGERPRINTS`, the option list, `decorateGrid`, `EFFECT_WHEN_OFF` and `start()`. Then check the fingerprints still match the game version, and test in the browser copy before installing in Steam.
+and carry the result over. The cell rewards section is one block, plus small edits to the header, `FINGERPRINTS`, the option list, `decorateGrid`, `EFFECT_WHEN_OFF` and `start()`. Then check the fingerprints still match the game version, and test in the browser copy before installing in Steam.
