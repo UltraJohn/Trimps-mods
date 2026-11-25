@@ -1,4 +1,4 @@
-// Trimps – Nice Features 1.8.2 (Steam mod)
+// Trimps – Nice Features 1.10.0 (Steam mod)
 //
 // Steam port of the old "Trimps Visual Overhaul" userscript:
 //  * Icons on the enemy grid showing where exotic imps (Magnimp, Goblimp, Chronoimp…) and
@@ -26,6 +26,14 @@
 //      - orange fill: you can't buy back past it yet
 //    A corner number shows the levels the next tier needs to pass the current item, and the
 //    upgrade's tooltip gets a line with the total cost. Upgrades stronger even at level 1 are unchanged.
+//  * Housing highlight (Settings > Mods, on by default): the housing building with the lowest cost
+//    per Trimp gets the same highlight as the game's Highlight Equipment. Compared by gems per Trimp
+//    once gem housing is unlocked, by food per Trimp before that. It can be set to hide while
+//    AutoStructure is on.
+//  * Right-click to remove (Settings > Mods, on by default): right-click a job to fire workers, or a
+//    perk in the portal or View Perks to remove levels, without switching to Fire or Remove. Uses
+//    your buy amount (so Shift for Max and Alt for Custom work too) and the game's own Fire and
+//    Remove, with the same limits and confirmations.
 //  * Settings > Mods also has an on/off toggle for the grid imp icons, the bonus panel, each part of
 //    the strip under the grid (Nature, heirlooms, story) and the hotkeys (all on by default).
 //  * The settings are in the Nice Features box of Settings > Mods, which the Nice Mod Loader
@@ -36,7 +44,7 @@
 // The game files are never changed. At runtime four game functions are wrapped (the wrapper
 // calls the game's original, then adds one step): drawGrid (put the grid icons back after each
 // redraw), mapsSwitch (hide the strip while the map chooser is open), updateButtonColor (mark
-// prestige upgrades after the game colours them) and tooltip (the extra prestige line). Before wrapping, each
+// prestige upgrades and the best housing after the game colours them) and tooltip (the extra prestige line). Before wrapping, each
 // is compared with a fingerprint of the version this mod was made for. If a Trimps update
 // changed one, that part stays off and a warning names the function and its new fingerprint;
 // set IGNORE_VERSION_CHECK = true below to wrap it anyway. (Without the mapsSwitch wrapper the
@@ -366,6 +374,23 @@ body.nfLightTip .nfStoryZone { background: rgba(91, 75, 196, 0.14); border-color
 			onToggle: function () { refreshPrestigeWarnings(); },
 		},
 		{
+			key: 'nfHousing',
+			titles: ['Best Housing: Off', 'Best Housing: On', 'Best Housing: No Auto'],
+			fallback: 1,
+			description: 'Highlights the housing building that gives the most Trimps for its cost, the same way Highlight Equipment does for equipment (Nice Features mod). '
+				+ 'Housing is compared by gems per Trimp once a building that costs gems is unlocked, and by food per Trimp before that. '
+				+ 'No Auto hides the highlight while AutoStructure is on, since it buys housing for you.',
+			onToggle: function () { refreshHousing(); },
+		},
+		{
+			key: 'nfRightClick',
+			titles: ['Right-Click: Off', 'Right-Click: Remove'],
+			fallback: 1,
+			description: 'Right-click a job to fire workers, or a perk to remove levels, without switching to Fire or Remove (Nice Features mod). '
+				+ 'It uses your buy amount, and the same rules as the Fire and Remove buttons: perks can only be removed when Remove is available.',
+			onToggle: function () {},
+		},
+		{
 			key: 'nfShiftMax',
 			titles: ['Shift for Max: Off', 'Shift for Max: On'],
 			fallback: 1,
@@ -486,6 +511,59 @@ body.nfLightTip .nfStoryZone { background: rgba(91, 75, 196, 0.14); border-color
 		});
 	}
 
+	/* ------------------------------------------------------------------ Housing highlight */
+	// Like the game's Highlight Equipment: the housing building with the lowest cost per Trimp gets the
+	// game's own efficientYes class, so it looks the same as the equipment highlight in every theme.
+	// Housing costs several resources, so it is compared on one: gems, the shared cost from Mansion up
+	// (Hut and House drop out then), or food before any gem housing is unlocked. Prices come from the
+	// game's getBuildingItemPrice; the Resourceful discount is the same for every building, so it is left out.
+	function housingOn() {
+		const mode = optionValue('nfHousing');
+		if (mode === 0) return false;
+		if (mode === 2) {
+			const auto = game.global.universe === 2 ? game.global.autoStructureSettingU2 : game.global.autoStructureSetting;
+			if (auto && auto.enabled) return false;
+		}
+		return true;
+	}
+	function housingList() {
+		return Object.keys(game.buildings).filter(function (name) {
+			const b = game.buildings[name];
+			return !b.locked && b.increase && b.increase.what === 'trimps.max' && b.increase.by > 0;
+		});
+	}
+	function bestHousing(list) {
+		const res = list.some(function (name) { return game.buildings[name].cost.gems; }) ? 'gems' : 'food';
+		let best = null;
+		let bestCost = Infinity;
+		let count = 0;
+		list.forEach(function (name) {
+			const b = game.buildings[name];
+			if (!b.cost[res]) return;
+			count++;
+			const perTrimp = getBuildingItemPrice(b, res, false, 1) / b.increase.by;
+			if (perTrimp < bestCost) { bestCost = perTrimp; best = name; }
+		});
+		return count > 1 ? best : null; // nothing to compare with a single building
+	}
+	function markHousing(name, best) {
+		const elem = document.getElementById(name);
+		if (!elem) return;
+		const yes = name === best;
+		if (elem.classList.contains('efficientYes') !== yes) elem.classList.toggle('efficientYes', yes);
+	}
+	// After the game colours a building button (several times a second), and when the option changes.
+	function updateHousing(what) {
+		const b = game.buildings[what];
+		if (!b || !b.increase || b.increase.what !== 'trimps.max') return;
+		markHousing(what, housingOn() ? bestHousing(housingList()) : null);
+	}
+	function refreshHousing() {
+		const list = housingList();
+		const best = housingOn() ? bestHousing(list) : null;
+		list.forEach(function (name) { markHousing(name, best); });
+	}
+
 	// Extra line in the upgrade's tooltip, under the game's "Your next X will grant ..." line.
 	function prestigeTipLine(what) {
 		// The game ignores hovers while a popup is locked open; don't add the line to that popup.
@@ -583,7 +661,7 @@ body.nfLightTip .nfStoryZone { background: rgba(91, 75, 196, 0.14); border-color
 	const EFFECT_WHEN_OFF = {
 		drawGrid: 'grid icons are off',
 		mapsSwitch: 'the strip hides up to a second late in the map screen',
-		updateButtonColor: 'prestige warnings are off',
+		updateButtonColor: 'prestige warnings and the housing highlight are off',
 		tooltip: 'the prestige line in upgrade tooltips is off',
 	};
 	function wrap(name, after) {
@@ -962,6 +1040,41 @@ body.nfLightTip .nfStoryZone { background: rgba(91, 75, 196, 0.14); border-color
 		} catch (err) { console.error('[Nice Features]', err); }
 	}
 
+	/* ------------------------------------------------------------------ Right-click to remove */
+	// Runs the game's own Fire (buyJob while firing) or Remove (buyPortalUpgrade while removing) for
+	// one click, then puts the mode back the way it was. The buttons are found by their onclick, which
+	// the game writes as buyJob('Name') and buyPortalUpgrade('Name').
+	function rightClickTarget(e) {
+		const elem = e.target.closest && e.target.closest('[onclick^="buyJob("], [onclick^="buyPortalUpgrade("]');
+		if (!elem) return null;
+		const m = /^(buyJob|buyPortalUpgrade)\('([^']+)'\)/.exec(elem.getAttribute('onclick'));
+		return m ? { fn: m[1], name: m[2] } : null;
+	}
+	function onContextMenu(e) {
+		if (optionValue('nfRightClick') !== 1) return;
+		const t = rightClickTarget(e);
+		if (!t) return;
+		e.preventDefault();
+		try {
+			if (t.fn === 'buyJob') {
+				if (!game.jobs[t.name]) return;
+				const was = game.global.firing;
+				game.global.firing = true;
+				try { buyJob(t.name); } finally { game.global.firing = was; }
+				// The Fire confirmation for other jobs is a popup; leave it up. Otherwise refresh the tooltip.
+				if (!game.global.lockTooltip) tooltip(t.name, 'jobs', 'update');
+			} else {
+				// Only where the game shows the Remove tab (a respec, or levels added in this portal).
+				const tab = document.getElementById('ptabRemove');
+				if (!game.portal[t.name] || !tab || tab.style.display === 'none') return;
+				const was = game.global.removingPerks;
+				game.global.removingPerks = true;
+				try { buyPortalUpgrade(t.name); } finally { game.global.removingPerks = was; }
+				updateAllPerkColors();
+			}
+		} catch (err) { console.error('[Nice Features]', err); }
+	}
+
 	/* ------------------------------------------------------------------ Shift for Max, Alt for Custom */
 	// Holding Shift selects the Max buy tab, holding the left Alt key the Custom one (main buy tabs, or
 	// the perk tabs in the portal and View Perks), through the game's own numTab, so every cost and
@@ -1183,6 +1296,7 @@ body.nfLightTip .nfStoryZone { background: rgba(91, 75, 196, 0.14); border-color
 			if (usingRealTimeOffline) return;
 			const u = game.upgrades[args[0]];
 			if (u && u.prestiges) markPrestige(args[0]);
+			else if (game.buildings[args[0]]) updateHousing(args[0]);
 		});
 		wrap('tooltip', function (result, args) {
 			const u = args[1] === 'upgrades' && game.upgrades[args[0]];
@@ -1193,6 +1307,7 @@ body.nfLightTip .nfStoryZone { background: rgba(91, 75, 196, 0.14); border-color
 		warnChanged();
 		// Capture phase on window runs before the game's own key handler on document.
 		window.addEventListener('keydown', onKeyDown, true);
+		window.addEventListener('contextmenu', onContextMenu, true);
 		watchHoldKeys();
 		// Panel and strip values change in many places in the game, so refresh them once a
 		// second. Visibility too, for a save loaded straight into the map chooser.
